@@ -105,7 +105,8 @@ FcPattern *createPattern(FontDescriptor *desc) {
   if (desc->style)
     FcPatternAddString(pattern, FC_STYLE, (FcChar8 *) desc->style);
 
-  FcPatternAddInteger(pattern, FC_SLANT, desc->italic ? FC_SLANT_ITALIC : FC_SLANT_ROMAN);
+  if (desc->italic)
+    FcPatternAddInteger(pattern, FC_SLANT, FC_SLANT_ITALIC);
 
   if (desc->weight)
     FcPatternAddInteger(pattern, FC_WEIGHT, convertWeight(desc->weight));
