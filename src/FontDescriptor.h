@@ -1,6 +1,8 @@
 #ifndef FONT_DESCRIPTOR_H
 #define FONT_DESCRIPTOR_H
 #include <v8.h>
+#include <stdlib.h>
+#include <string.h>
 
 using namespace v8;
 
