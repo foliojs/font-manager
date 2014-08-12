@@ -8,6 +8,11 @@ A C++ module for Node.js providing access to the system font catalog.
 * Find fonts with specified characteristics
 * Font substitution when characters are missing (TODO)
 
+## Platforms
+
+* Mac OS X 10.5 and later supported via [CoreText](https://developer.apple.com/library/mac/documentation/Carbon/reference/CoreText_Framework_Ref/_index.html)
+* Windows Vista SP2 and later supported via [DirectWrite](http://msdn.microsoft.com/en-us/library/windows/desktop/dd368038(v=vs.85).aspx)
+* Linux supported via [fontconfig](http://www.freedesktop.org/software/fontconfig)
 
 ## API
 
