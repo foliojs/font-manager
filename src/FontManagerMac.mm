@@ -49,49 +49,75 @@ static inline int sqr(int value) {
   return value * value;
 }
 
-Handle<Value> findFont(FontDescriptor *desc) {  
+CTFontDescriptorRef getFontDescriptor(FontDescriptor *desc) {
   // build a dictionary of font attributes
   NSMutableDictionary *attrs = [NSMutableDictionary dictionary];
   CTFontSymbolicTraits symbolicTraits = 0;
-  
+
   if (desc->postscriptName) {
     NSString *postscriptName = [NSString stringWithUTF8String:desc->postscriptName];
     attrs[(id)kCTFontNameAttribute] = postscriptName;
   }
-  
+
   if (desc->family) {
     NSString *family = [NSString stringWithUTF8String:desc->family];
     attrs[(id)kCTFontFamilyNameAttribute] = family;
   }
-  
+
   if (desc->style) {
     NSString *style = [NSString stringWithUTF8String:desc->style];
     attrs[(id)kCTFontStyleNameAttribute] = style;
   }
-  
+
   // build symbolic traits
   if (desc->italic)
     symbolicTraits |= kCTFontItalicTrait;
-  
+
   if (desc->weight == FontWeightBold)
     symbolicTraits |= kCTFontBoldTrait;
-  
+
   if (desc->monospace)
     symbolicTraits |= kCTFontMonoSpaceTrait;
-  
+
   if (desc->width == FontWidthCondensed)
     symbolicTraits |= kCTFontCondensedTrait;
-  
+
   if (desc->width == FontWidthExpanded)
     symbolicTraits |= kCTFontExpandedTrait;
-  
+
   if (symbolicTraits) {
     NSDictionary *traits = @{(id)kCTFontSymbolicTrait:[NSNumber numberWithUnsignedInt:symbolicTraits]};
     attrs[(id)kCTFontTraitsAttribute] = traits;
   }
-  
+
   // create a font descriptor and search for matches
   CTFontDescriptorRef descriptor = CTFontDescriptorCreateWithAttributes((CFDictionaryRef) attrs);
+  [attrs release];
+  
+  return descriptor;
+}
+
+Handle<Value> findFonts(FontDescriptor *desc) {
+  CTFontDescriptorRef descriptor = getFontDescriptor(desc);
+  NSArray *matches = (NSArray *) CTFontDescriptorCreateMatchingFontDescriptors(descriptor, NULL);
+  Local<Array> res = Array::New([matches count]);
+  int count = 0;
+  
+  for (id m in matches) {
+    CTFontDescriptorRef match = (CTFontDescriptorRef) m;
+    NSURL *url = (NSURL *) CTFontDescriptorCopyAttribute(match, kCTFontURLAttribute);
+    NSString *ps = (NSString *) CTFontDescriptorCopyAttribute(match, kCTFontNameAttribute);
+    res->Set(count++, createResult([url path], ps));
+    [url release];
+    [ps release];
+  }
+  
+  [matches release];
+  return res;
+}
+
+Handle<Value> findFont(FontDescriptor *desc) {  
+  CTFontDescriptorRef descriptor = getFontDescriptor(desc);
   NSArray *matches = (NSArray *) CTFontDescriptorCreateMatchingFontDescriptors(descriptor, NULL);
   
   // find the closest match for width and weight attributes
@@ -104,7 +130,7 @@ Handle<Value> findFont(FontDescriptor *desc) {
     
     int weight = convertWeight([dict[(id)kCTFontWeightTrait] floatValue]);
     int width = convertWidth([dict[(id)kCTFontWidthTrait] floatValue]);
-    bool italic = ([dict[(id)kCTFontSymbolicTrait] unsignedIntValue] & kCTFontItalicTrait) == 1;
+    bool italic = ([dict[(id)kCTFontSymbolicTrait] unsignedIntValue] & kCTFontItalicTrait);
         
     // normalize everything to base-900
     int metric = sqr(weight - desc->weight) + 
