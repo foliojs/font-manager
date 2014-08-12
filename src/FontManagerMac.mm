@@ -6,9 +6,7 @@
 #include "FontManagerResult.h"
 
 Local<Object> createResult(NSString *path, NSString *postscriptName) {
-  const char *pathData = [path cStringUsingEncoding:NSUTF8StringEncoding];
-  const char *psData = [postscriptName cStringUsingEncoding:NSUTF8StringEncoding];
-  return createResult(pathData, psData);
+  return createResult([path UTF8String], [postscriptName UTF8String]);
 }
 
 Handle<Value> getAvailableFonts(const Arguments& args) {
@@ -57,17 +55,17 @@ Handle<Value> findFont(FontDescriptor *desc) {
   CTFontSymbolicTraits symbolicTraits = 0;
   
   if (desc->postscriptName) {
-    NSString *postscriptName = [[NSString alloc] initWithCString:desc->postscriptName encoding:NSUTF8StringEncoding];
+    NSString *postscriptName = [NSString stringWithUTF8String:desc->postscriptName];
     attrs[(id)kCTFontNameAttribute] = postscriptName;
   }
   
   if (desc->family) {
-    NSString *family = [[NSString alloc] initWithCString:desc->family encoding:NSUTF8StringEncoding];
+    NSString *family = [NSString stringWithUTF8String:desc->family];
     attrs[(id)kCTFontFamilyNameAttribute] = family;
   }
   
   if (desc->style) {
-    NSString *style = [[NSString alloc] initWithCString:desc->style encoding:NSUTF8StringEncoding];
+    NSString *style = [NSString stringWithUTF8String:desc->style];
     attrs[(id)kCTFontStyleNameAttribute] = style;
   }
   
