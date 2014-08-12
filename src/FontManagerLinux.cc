@@ -4,16 +4,9 @@
 #include "FontDescriptor.h"
 #include "FontManagerResult.h"
 
-Handle<Value> getAvailableFonts(const Arguments& args) {
-  HandleScope scope;
-    
-  FcInit();
-
-  FcPattern *pattern = FcPatternCreate();
-  FcObjectSet *os = FcObjectSetBuild(FC_POSTSCRIPT_NAME, FC_FILE, (char *) 0);
-  FcFontSet *fs = FcFontList(NULL, pattern, os);
+Local<Array> arrayFromFontSet(FcFontSet *fs) {
   if (!fs)
-    return scope.Close(Null());
+    return Array::New(0);
 
   Local<Array> res = Array::New(fs->nfont);
   int count = 0;
@@ -28,6 +21,19 @@ Handle<Value> getAvailableFonts(const Arguments& args) {
       res->Set(count++, createResult((char *)file, (char *)psName));
     }
   }
+
+  return res;
+}
+
+Handle<Value> getAvailableFonts(const Arguments& args) {
+  HandleScope scope;
+    
+  FcInit();
+
+  FcPattern *pattern = FcPatternCreate();
+  FcObjectSet *os = FcObjectSetBuild(FC_POSTSCRIPT_NAME, FC_FILE, NULL);
+  FcFontSet *fs = FcFontList(NULL, pattern, os);
+  Local<Array> res = arrayFromFontSet(fs);
   
   FcPatternDestroy(pattern);
   FcObjectSetDestroy(os);
@@ -86,36 +92,55 @@ int convertWidth(FontWidth width) {
   }
 }
 
-Handle<Value> findFont(FontDescriptor *desc) {
+FcPattern *createPattern(FontDescriptor *desc) {
   FcInit();
-
   FcPattern *pattern = FcPatternCreate();
 
-  if (desc->postscriptName) {
+  if (desc->postscriptName)
     FcPatternAddString(pattern, FC_POSTSCRIPT_NAME, (FcChar8 *) desc->postscriptName);
-  }
 
-  if (desc->family) {
+  if (desc->family)
     FcPatternAddString(pattern, FC_FAMILY, (FcChar8 *) desc->family);
-  }
 
-  if (desc->style) {
+  if (desc->style)
     FcPatternAddString(pattern, FC_STYLE, (FcChar8 *) desc->style);
-  }
 
   FcPatternAddInteger(pattern, FC_SLANT, desc->italic ? FC_SLANT_ITALIC : FC_SLANT_ROMAN);
-  FcPatternAddInteger(pattern, FC_WEIGHT, convertWeight(desc->weight));
-  FcPatternAddInteger(pattern, FC_WIDTH, convertWidth(desc->width));
 
-  if (desc->monospace) {
+  if (desc->weight)
+    FcPatternAddInteger(pattern, FC_WEIGHT, convertWeight(desc->weight));
+
+  if (desc->width)
+    FcPatternAddInteger(pattern, FC_WIDTH, convertWidth(desc->width));
+
+  if (desc->monospace)
     FcPatternAddInteger(pattern, FC_SPACING, FC_MONO);
-  }
 
-  FcConfigSubstitute(0, pattern, FcMatchPattern);
+  return pattern;
+}
+
+Handle<Value> findFonts(FontDescriptor *desc) {
+  FcPattern *pattern = createPattern(desc);
+  FcObjectSet *os = FcObjectSetBuild(FC_POSTSCRIPT_NAME, FC_FILE, NULL);
+  FcFontSet *fs = FcFontList(NULL, pattern, os);
+
+  Local<Array> res = arrayFromFontSet(fs);
+
+  FcFontSetDestroy(fs);
+  FcPatternDestroy(pattern);
+  FcObjectSetDestroy(os);
+
+  return res;
+}
+
+Handle<Value> findFont(FontDescriptor *desc) {
+  FcPattern *pattern = createPattern(desc);
+  FcConfigSubstitute(NULL, pattern, FcMatchPattern);
   FcDefaultSubstitute(pattern);
 
   FcResult result;
   FcPattern *font = FcFontMatch(NULL, pattern, &result);
+
   FcChar8 *file;
   FcChar8 *psName;
   Handle<Value> res;

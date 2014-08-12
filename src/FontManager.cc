@@ -6,9 +6,10 @@
 using namespace v8;
 
 Handle<Value> getAvailableFonts(const Arguments&);
+Handle<Value> findFonts(FontDescriptor *);
 Handle<Value> findFont(FontDescriptor *);
 
-Handle<Value> findFont(const Arguments& args) {
+Handle<Value> findFontFn(const Arguments& args, Handle<Value> (*fn)(FontDescriptor *)) {
   HandleScope scope;
   
   if (args.Length() < 1) {
@@ -23,11 +24,20 @@ Handle<Value> findFont(const Arguments& args) {
 
   Local<Object> desc = Local<Object>::Cast(args[0]);
   FontDescriptor *descriptor = new FontDescriptor(desc);
-  return scope.Close(findFont(descriptor));
+  return scope.Close(fn(descriptor));
+}
+
+Handle<Value> findFonts(const Arguments& args) {
+  return findFontFn(args, findFonts);
+}
+
+Handle<Value> findFont(const Arguments& args) {
+  return findFontFn(args, findFont);
 }
 
 void init(Handle<Object> exports) {
   exports->Set(String::NewSymbol("getAvailableFonts"), FunctionTemplate::New(getAvailableFonts)->GetFunction());
+  exports->Set(String::NewSymbol("findFonts"), FunctionTemplate::New(findFonts)->GetFunction());
   exports->Set(String::NewSymbol("findFont"), FunctionTemplate::New(findFont)->GetFunction());
 }
 
