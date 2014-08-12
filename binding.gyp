@@ -15,6 +15,12 @@
           "link_settings": {
             "libraries": ["Dwrite.lib"]
           }
+        }],
+        ['OS=="linux"', {
+          "sources": ["src/FontManagerLinux.cc"],
+          "link_settings": {
+            "libraries": ["-lfontconfig"]
+          }
         }]
       ]
     }
