@@ -92,8 +92,6 @@ Handle<Value> getAvailableFonts(const Arguments& args) {
   for (int i = 0; i < familyCount; i++) {
     IDWriteFontFamily *family = NULL;
     int fontCount = 0;
-    WCHAR *lastPSName = NULL;
-    unsigned int lastPSLength = 0;
 
     // Get the font family.
     HR(collection->GetFontFamily(i, &family));
@@ -104,8 +102,6 @@ Handle<Value> getAvailableFonts(const Arguments& args) {
       HR(family->GetFont(j, &font));
       res->Set(count++, resultFromFont(font));
     }
-
-    free(lastPSName);
   }
 
   return scope.Close(res);
