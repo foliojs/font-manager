@@ -3,6 +3,13 @@
 #include <node.h>
 #include <v8.h>
 #include "FontDescriptor.h"
+#include "FontManagerResult.h"
+
+Local<Object> createResult(NSString *path, NSString *postscriptName) {
+  const char *pathData = [path cStringUsingEncoding:NSUTF8StringEncoding];
+  const char *psData = [postscriptName cStringUsingEncoding:NSUTF8StringEncoding];
+  return createResult(pathData, psData);
+}
 
 v8::Handle<v8::Value> getAvailableFonts(const v8::Arguments& args) {
   v8::HandleScope scope;
@@ -12,10 +19,9 @@ v8::Handle<v8::Value> getAvailableFonts(const v8::Arguments& args) {
   
   int i = 0;
   for (NSURL *url in urls) {
-    NSString *str = [url absoluteString];
-    const char *data = [str cStringUsingEncoding:NSUTF8StringEncoding];
-    res->Set(i++, v8::String::New(data));
-    [str release];
+    NSString *path = [url path];
+    NSString *psName = [[url fragment] stringByReplacingOccurrencesOfString:@"postscript-name=" withString:@""];
+    res->Set(i++, createResult(path, psName));
   }
   
   [urls release];
@@ -45,9 +51,7 @@ static inline int sqr(int value) {
   return value * value;
 }
 
-const char *findFont(FontDescriptor *desc) {
-  char *data = NULL;
-  
+Handle<Value> findFont(FontDescriptor *desc) {  
   // build a dictionary of font attributes
   NSMutableDictionary *attrs = [NSMutableDictionary dictionary];
   CTFontSymbolicTraits symbolicTraits = 0;
@@ -125,18 +129,15 @@ const char *findFont(FontDescriptor *desc) {
   if (best) {    
     NSURL *url = (NSURL *)CTFontDescriptorCopyAttribute(best, kCTFontURLAttribute);
     NSString *ps = (NSString *)CTFontDescriptorCopyAttribute(best, kCTFontNameAttribute);
-    NSString *str = [NSString stringWithFormat:@"%@#postscript-name=%@", [url absoluteString], ps];
-    NSInteger len = [str maximumLengthOfBytesUsingEncoding:NSUTF8StringEncoding] + 1;
-
-    data = (char *) malloc(len);
-    [str getCString:data maxLength:len encoding:NSUTF8StringEncoding];
+    Local<Object> res = createResult([url path], ps);
 
     [url release];
-    [str release];
     [ps release];
     [matches release];
+    
+    return res;
   }
   
   CFRelease(descriptor);  
-  return data;
+  return v8::Null();
 }

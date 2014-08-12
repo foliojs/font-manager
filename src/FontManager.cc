@@ -5,7 +5,7 @@
 using namespace v8;
 
 Handle<Value> getAvailableFonts(const Arguments&);
-char *findFont(FontDescriptor *);
+Handle<Value> findFont(FontDescriptor *);
 
 Handle<Value> findFont(const Arguments& args) {
   HandleScope scope;
@@ -22,15 +22,7 @@ Handle<Value> findFont(const Arguments& args) {
 
   Local<Object> desc = Local<Object>::Cast(args[0]);
   FontDescriptor *descriptor = new FontDescriptor(desc);
-  char *url = findFont(descriptor);
-  
-  if (url) {
-    Local<String> str = String::New(url);
-    free(url);
-    return scope.Close(str);
-  }
-  
-  return scope.Close(Null());
+  return scope.Close(findFont(descriptor));
 }
 
 void init(Handle<Object> exports) {
