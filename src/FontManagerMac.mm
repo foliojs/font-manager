@@ -11,11 +11,11 @@ Local<Object> createResult(NSString *path, NSString *postscriptName) {
   return createResult(pathData, psData);
 }
 
-v8::Handle<v8::Value> getAvailableFonts(const v8::Arguments& args) {
-  v8::HandleScope scope;
+Handle<Value> getAvailableFonts(const Arguments& args) {
+  HandleScope scope;
     
   NSArray *urls = (NSArray *) CTFontManagerCopyAvailableFontURLs();
-  v8::Local<v8::Array> res = v8::Array::New([urls count]);
+  Local<Array> res = Array::New([urls count]);
   
   int i = 0;
   for (NSURL *url in urls) {
@@ -139,5 +139,5 @@ Handle<Value> findFont(FontDescriptor *desc) {
   }
   
   CFRelease(descriptor);  
-  return v8::Null();
+  return Null();
 }
