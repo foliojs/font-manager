@@ -9,6 +9,12 @@
           "link_settings": {
             "libraries": ["CoreText.framework", "Foundation.framework"]
           }
+        }],
+        ['OS=="win"', {
+          "sources": ["src/FontManagerWindows.cc"],
+          "link_settings": {
+            "libraries": ["Dwrite.lib"]
+          }
         }]
       ]
     }
