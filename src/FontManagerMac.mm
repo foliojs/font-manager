@@ -151,8 +151,8 @@ Handle<Value> findFont(FontDescriptor *desc) {
       
   // if we found a match, generate and return a URL for it
   if (best) {    
-    NSURL *url = (NSURL *)CTFontDescriptorCopyAttribute(best, kCTFontURLAttribute);
-    NSString *ps = (NSString *)CTFontDescriptorCopyAttribute(best, kCTFontNameAttribute);
+    NSURL *url = (NSURL *) CTFontDescriptorCopyAttribute(best, kCTFontURLAttribute);
+    NSString *ps = (NSString *) CTFontDescriptorCopyAttribute(best, kCTFontNameAttribute);
     Local<Object> res = createResult([url path], ps);
 
     [url release];
@@ -162,6 +162,44 @@ Handle<Value> findFont(FontDescriptor *desc) {
     return res;
   }
   
-  CFRelease(descriptor);  
+  CFRelease(descriptor);
+  return Null();
+}
+
+Handle<Value> substituteFont(char *postscriptName, char *string) {
+  // create a font descriptor to find the font by its postscript name
+  // we don't use CTFontCreateWithName because that will return a best
+  // match even if the font doesn't actually exist.
+  NSString *ps = [NSString stringWithUTF8String:postscriptName];
+  NSDictionary *attrs = @{(id)kCTFontNameAttribute: ps};
+  CTFontDescriptorRef descriptor = CTFontDescriptorCreateWithAttributes((CFDictionaryRef) attrs);
+  [attrs release];
+  
+  // find a match
+  CTFontDescriptorRef match = CTFontDescriptorCreateMatchingFontDescriptor(descriptor, NULL);
+  CFRelease(descriptor);
+  
+  if (match) {
+    // copy the font descriptor for this match and create a substitute font matching the given string
+    CTFontRef font = CTFontCreateWithFontDescriptor(match, 12.0, NULL);
+    NSString *str = [NSString stringWithUTF8String:string];
+    CTFontRef substituteFont = CTFontCreateForString(font, (CFStringRef) str, CFRangeMake(0, [str length]));
+    CTFontDescriptorRef substituteDescriptor = CTFontCopyFontDescriptor(substituteFont);
+    
+    // finally, create and return a result object for this substitute font
+    NSURL *url = (NSURL *) CTFontDescriptorCopyAttribute(substituteDescriptor, kCTFontURLAttribute);
+    NSString *ps = (NSString *) CTFontDescriptorCopyAttribute(substituteDescriptor, kCTFontNameAttribute);
+    Local<Object> res = createResult([url path], ps);
+    
+    CFRelease(font);
+    [str release];
+    CFRelease(substituteFont);
+    CFRelease(substituteDescriptor);
+    [url release];
+    [ps release];
+    
+    return res;
+  }
+  
   return Null();
 }
