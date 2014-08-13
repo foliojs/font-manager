@@ -158,3 +158,48 @@ Handle<Value> findFont(FontDescriptor *desc) {
 
   return res;
 }
+
+Handle<Value> substituteFont(char *postscriptName, char *string) {
+  FcInit();
+
+  // create a pattern with the postscript name
+  FcPattern* pattern = FcPatternCreate();
+  FcPatternAddString(pattern, FC_POSTSCRIPT_NAME, (FcChar8 *) postscriptName);
+
+  // create a charset with each character in the string
+  FcCharSet* charset = FcCharSetCreate();
+  int len = strlen(string);
+
+  for (int i = 0; i < len;) {
+    FcChar32 c;
+    i += FcUtf8ToUcs4((FcChar8 *)string + i, &c, len - i);
+    FcCharSetAddChar(charset, c);
+  }
+
+  FcPatternAddCharSet(pattern, FC_CHARSET, charset);
+  FcCharSetDestroy(charset);
+
+  FcConfigSubstitute(0, pattern, FcMatchPattern);
+  FcDefaultSubstitute(pattern);
+
+  // find the best match font
+  FcResult result;
+  FcPattern *font = FcFontMatch(NULL, pattern, &result);
+
+  FcChar8 *file;
+  FcChar8 *psName;
+  Handle<Value> res;
+
+  // create a result object if we found a match
+  if (FcPatternGetString(font, FC_FILE, 0, &file) == FcResultMatch &&
+      FcPatternGetString(font, FC_POSTSCRIPT_NAME, 0, &psName) == FcResultMatch) {
+    res = createResult((char *)file, (char *)psName);
+  } else {
+    res = Null();
+  }
+
+  FcPatternDestroy(pattern);
+  FcPatternDestroy(font);
+
+  return res;
+}
