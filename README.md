@@ -6,7 +6,7 @@ A C++ module for Node.js providing access to the system font catalog.
 
 * List all available fonts
 * Find fonts with specified characteristics
-* Font substitution when characters are missing (TODO)
+* Font substitution when characters are missing
 
 ## Platforms
 
@@ -20,16 +20,24 @@ A C++ module for Node.js providing access to the system font catalog.
 var fontManager = require('font-manager');
 
 // list all available fonts
-fontManager.getAvailableFonts(); // => [{ path: '/path/to/font.ttf', postscriptName: 'name' }, ...]
+fontManager.getAvailableFonts();
+//=> [{ path: '/path/to/font.ttf', postscriptName: 'name' }, ...]
 
 // find fonts with characteristics
 var desc = new fontManager.FontDescriptor();
 desc.family = "Helvetica Neue";
 
-fontManager.findFonts(desc); // => [{ path: '/path/to/Helvetica.ttf', postscriptName: 'Helvetica-Regular' }, ...]
+fontManager.findFonts(desc);
+//=> [{ path: '/path/to/Helvetica.ttf', postscriptName: 'Helvetica-Regular' }, ...]
 
 // find the font with the best match
-fontManager.findFont(desc); // => { path: '/path/to/Helvetica.ttf', postscriptName: 'Helvetica-Regular' }
+fontManager.findFont(desc);
+//=> { path: '/path/to/Helvetica.ttf', postscriptName: 'Helvetica-Regular' }
+
+// substitute the font with the given postscript name 
+// with another font that contains the given characters
+fontManager.substituteFont('TimesNewRomanPSMT', '汉字')
+//=> { path: '/Library/Fonts/Songti.ttc', postscriptName: 'STSongti-SC-Regular' }
 ```
 
 ## License
