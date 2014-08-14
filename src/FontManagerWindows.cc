@@ -112,11 +112,15 @@ Handle<Value> getAvailableFonts(const Arguments& args) {
   return scope.Close(res);
 }
 
+WCHAR *utf8ToUtf16(char *input) {
+  unsigned int len = MultiByteToWideChar(CP_UTF8, 0, input, -1, NULL, 0);
+  WCHAR *output = new WCHAR[len];
+  MultiByteToWideChar(CP_UTF8, 0, input, -1, output, len);
+  return output;
+}
+
 IDWriteFont *findFontByFamily(IDWriteFontCollection *collection, FontDescriptor *desc) {
-  int size = strlen(desc->family) + 1;
-  wchar_t *family = new wchar_t[size];
-  size_t convertedChars = 0;
-  mbstowcs_s(&convertedChars, family, size, desc->family, _TRUNCATE);
+  WCHAR *family = utf8ToUtf16(desc->family);
 
   unsigned int index;
   BOOL exists;
@@ -144,10 +148,7 @@ IDWriteFont *findFontByFamily(IDWriteFontCollection *collection, FontDescriptor 
 }
 
 IDWriteFont *findFontByPostscriptName(IDWriteFontCollection *collection, FontDescriptor *desc) {
-  int size = strlen(desc->postscriptName) + 1;
-  wchar_t *postscriptName = new wchar_t[size];
-  size_t convertedChars = 0;
-  mbstowcs_s(&convertedChars, postscriptName, size, desc->postscriptName, _TRUNCATE);
+  WCHAR *postscriptName = utf8ToUtf16(desc->postscriptName);
 
   // Get the number of font families in the collection.
   int familyCount = collection->GetFontFamilyCount();
@@ -358,9 +359,7 @@ Handle<Value> substituteFont(char *postscriptName, char *string) {
     HR(names->GetString(0, familyName, length + 1));
 
     // convert utf8 string for substitution to utf16
-    unsigned int strLen = MultiByteToWideChar(CP_UTF8, 0, string, -1, NULL, 0);
-    WCHAR *str = new WCHAR[strLen];
-    MultiByteToWideChar(CP_UTF8, 0, string, -1, str, strLen);
+    WCHAR *str = utf8ToUtf16(string);
 
     // create a text format
     IDWriteTextFormat *format = NULL;
@@ -379,7 +378,7 @@ Handle<Value> substituteFont(char *postscriptName, char *string) {
     IDWriteTextLayout *layout = NULL;
     HR(factory->CreateTextLayout(
       str,
-      strLen - 1, // ignore null character
+      wcslen(str),
       format,
       100.0,
       100.0,
