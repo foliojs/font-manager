@@ -49,6 +49,12 @@ public:
     italic = getBool(obj, "italic");
     monospace = getBool(obj, "monospace");
   }
+
+  FontDescriptor() {
+    postscriptName = NULL;
+    family = NULL;
+    style = NULL;
+  }
   
   ~FontDescriptor() {
     if (this->postscriptName)
