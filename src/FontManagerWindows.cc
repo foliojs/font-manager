@@ -119,29 +119,27 @@ WCHAR *utf8ToUtf16(char *input) {
   return output;
 }
 
-IDWriteFont *findFontByFamily(IDWriteFontCollection *collection, FontDescriptor *desc) {
+IDWriteFontList *findFontsByFamily(IDWriteFontCollection *collection, FontDescriptor *desc) {
   WCHAR *family = utf8ToUtf16(desc->family);
 
   unsigned int index;
   BOOL exists;
   HR(collection->FindFamilyName(family, &index, &exists));
-
   delete family;
 
   if (exists) {
     IDWriteFontFamily *family = NULL;
     HR(collection->GetFontFamily(index, &family));
 
-    // IDWriteFontList *fontList = NULL;
-    IDWriteFont *font = NULL;
-    HR(family->GetFirstMatchingFont(
+    IDWriteFontList *fontList = NULL;
+    HR(family->GetMatchingFonts(
       desc->weight ? (DWRITE_FONT_WEIGHT) desc->weight : DWRITE_FONT_WEIGHT_NORMAL,
       desc->width  ? (DWRITE_FONT_STRETCH) desc->width : DWRITE_FONT_STRETCH_UNDEFINED,
       desc->italic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL,
-      &font
+      &fontList
     ));
 
-    return font;
+    return fontList;
   }
 
   return NULL;
@@ -180,6 +178,40 @@ IDWriteFont *findFontByPostscriptName(IDWriteFontCollection *collection, FontDes
   return NULL;
 }
 
+Handle<Value> findFonts(FontDescriptor *desc) {
+  IDWriteFactory *factory = NULL;
+  HR(DWriteCreateFactory(
+    DWRITE_FACTORY_TYPE_SHARED,
+    __uuidof(IDWriteFactory),
+    reinterpret_cast<IUnknown**>(&factory)
+  ));
+
+  // Get the system font collection.
+  IDWriteFontCollection *collection = NULL;
+  HR(factory->GetSystemFontCollection(&collection));
+
+  if (desc->family) {
+    IDWriteFontList *fonts = findFontsByFamily(collection, desc);
+    int fontCount = fonts ? fonts->GetFontCount() : 0;
+    Local<Array> res = Array::New(fontCount);
+
+    for (int j = 0; j < fontCount; j++) {
+      IDWriteFont *font = NULL;
+      HR(fonts->GetFont(j, &font));
+      res->Set(j, resultFromFont(font));
+    }
+
+    return res;
+  } else if (desc->postscriptName) {
+    IDWriteFont *font = findFontByPostscriptName(collection, desc);
+    Local<Array> res = Array::New(1);
+    res->Set(0, resultFromFont(font));
+    return res;
+  }
+
+  return Array::New(0);
+}
+
 Handle<Value> findFont(FontDescriptor *desc) {
   IDWriteFactory *factory = NULL;
   HR(DWriteCreateFactory(
@@ -194,7 +226,9 @@ Handle<Value> findFont(FontDescriptor *desc) {
 
   IDWriteFont *font = NULL;
   if (desc->family) {
-    font = findFontByFamily(collection, desc);
+    IDWriteFontList *fonts = findFontsByFamily(collection, desc);
+    if (fonts && fonts->GetFontCount() > 0)
+      fonts->GetFont(0, &font);
   } else if (desc->postscriptName) {
     font = findFontByPostscriptName(collection, desc);
   }
@@ -203,10 +237,6 @@ Handle<Value> findFont(FontDescriptor *desc) {
     return resultFromFont(font);
   }
 
-  return Null();
-}
-
-Handle<Value> findFonts(FontDescriptor *desc) {
   return Null();
 }
 
