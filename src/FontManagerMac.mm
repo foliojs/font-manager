@@ -100,15 +100,18 @@ CTFontDescriptorRef getFontDescriptor(FontDescriptor *desc) {
 int metricForMatch(CTFontDescriptorRef match, FontDescriptor *desc) {
   NSDictionary *dict = (NSDictionary *)CTFontDescriptorCopyAttribute(match, kCTFontTraitsAttribute);
 
-  int weight = convertWeight([dict[(id)kCTFontWeightTrait] floatValue]);
-  int width = convertWidth([dict[(id)kCTFontWidthTrait] floatValue]);
   bool italic = ([dict[(id)kCTFontSymbolicTrait] unsignedIntValue] & kCTFontItalicTrait);
     
   // normalize everything to base-900
-  int metric = sqr(weight - desc->weight) + 
-               sqr((width - desc->width) * 100) + 
-               sqr((italic != desc->italic) * 900);
+  int metric = 0;
+  if (desc->weight)
+    metric += sqr(convertWeight([dict[(id)kCTFontWeightTrait] floatValue]) - desc->weight);
   
+  if (desc->width)
+    metric += sqr((convertWidth([dict[(id)kCTFontWidthTrait] floatValue]) - desc->width) * 100);
+  
+  metric += sqr((italic != desc->italic) * 900);
+
   [dict release];
   return metric;
 }
