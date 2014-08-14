@@ -119,7 +119,7 @@ int metricForMatch(CTFontDescriptorRef match, FontDescriptor *desc) {
 Handle<Value> findFonts(FontDescriptor *desc) {
   CTFontDescriptorRef descriptor = getFontDescriptor(desc);
   NSArray *matches = (NSArray *) CTFontDescriptorCreateMatchingFontDescriptors(descriptor, NULL);
-  Local<Array> res = Array::New([matches count]);
+  Local<Array> res = Array::New(0);
   int count = 0;
   
   NSArray *sorted = [matches sortedArrayUsingComparator:^NSComparisonResult(id a, id b) {
@@ -130,11 +130,15 @@ Handle<Value> findFonts(FontDescriptor *desc) {
   
   for (id m in sorted) {
     CTFontDescriptorRef match = (CTFontDescriptorRef) m;
-    NSURL *url = (NSURL *) CTFontDescriptorCopyAttribute(match, kCTFontURLAttribute);
-    NSString *ps = (NSString *) CTFontDescriptorCopyAttribute(match, kCTFontNameAttribute);
-    res->Set(count++, createResult([url path], ps));
-    [url release];
-    [ps release];
+    int mb = metricForMatch((CTFontDescriptorRef) m, desc);
+    
+    if (mb < 10000) {
+      NSURL *url = (NSURL *) CTFontDescriptorCopyAttribute(match, kCTFontURLAttribute);
+      NSString *ps = (NSString *) CTFontDescriptorCopyAttribute(match, kCTFontNameAttribute);
+      res->Set(count++, createResult([url path], ps));
+      [url release];
+      [ps release];
+    }
   }
   
   [sorted release];
