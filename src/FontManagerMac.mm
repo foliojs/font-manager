@@ -97,13 +97,35 @@ CTFontDescriptorRef getFontDescriptor(FontDescriptor *desc) {
   return descriptor;
 }
 
+int metricForMatch(CTFontDescriptorRef match, FontDescriptor *desc) {
+  NSDictionary *dict = (NSDictionary *)CTFontDescriptorCopyAttribute(match, kCTFontTraitsAttribute);
+
+  int weight = convertWeight([dict[(id)kCTFontWeightTrait] floatValue]);
+  int width = convertWidth([dict[(id)kCTFontWidthTrait] floatValue]);
+  bool italic = ([dict[(id)kCTFontSymbolicTrait] unsignedIntValue] & kCTFontItalicTrait);
+    
+  // normalize everything to base-900
+  int metric = sqr(weight - desc->weight) + 
+               sqr((width - desc->width) * 100) + 
+               sqr((italic != desc->italic) * 900);
+  
+  [dict release];
+  return metric;
+}
+
 Handle<Value> findFonts(FontDescriptor *desc) {
   CTFontDescriptorRef descriptor = getFontDescriptor(desc);
   NSArray *matches = (NSArray *) CTFontDescriptorCreateMatchingFontDescriptors(descriptor, NULL);
   Local<Array> res = Array::New([matches count]);
   int count = 0;
   
-  for (id m in matches) {
+  NSArray *sorted = [matches sortedArrayUsingComparator:^NSComparisonResult(id a, id b) {
+    int ma = metricForMatch((CTFontDescriptorRef) a, desc);
+    int mb = metricForMatch((CTFontDescriptorRef) b, desc);
+    return ma < mb ? NSOrderedAscending : ma > mb ? NSOrderedDescending : NSOrderedSame;
+  }];
+  
+  for (id m in sorted) {
     CTFontDescriptorRef match = (CTFontDescriptorRef) m;
     NSURL *url = (NSURL *) CTFontDescriptorCopyAttribute(match, kCTFontURLAttribute);
     NSString *ps = (NSString *) CTFontDescriptorCopyAttribute(match, kCTFontNameAttribute);
@@ -112,6 +134,7 @@ Handle<Value> findFonts(FontDescriptor *desc) {
     [ps release];
   }
   
+  [sorted release];
   [matches release];
   return res;
 }
@@ -125,25 +148,13 @@ Handle<Value> findFont(FontDescriptor *desc) {
   int bestMetric = INT_MAX;
   
   for (id m in matches) {
-    CTFontDescriptorRef match = (CTFontDescriptorRef) m;
-    NSDictionary *dict = (NSDictionary *)CTFontDescriptorCopyAttribute(match, kCTFontTraitsAttribute);
-    
-    int weight = convertWeight([dict[(id)kCTFontWeightTrait] floatValue]);
-    int width = convertWidth([dict[(id)kCTFontWidthTrait] floatValue]);
-    bool italic = ([dict[(id)kCTFontSymbolicTrait] unsignedIntValue] & kCTFontItalicTrait);
-        
-    // normalize everything to base-900
-    int metric = sqr(weight - desc->weight) + 
-                 sqr((width - desc->width) * 100) + 
-                 sqr((italic != desc->italic) * 900);
+    int metric = metricForMatch((CTFontDescriptorRef) m, desc);
     
     if (metric < bestMetric) {
       bestMetric = metric;
-      best = match;
+      best = (CTFontDescriptorRef) m;
     }
-    
-    [dict release];
-    
+        
     // break if this is an exact match
     if (metric == 0)
       break;
