@@ -57,18 +57,18 @@ public:
   }
   
   ~FontDescriptor() {
-    if (this->postscriptName)
-      free(this->postscriptName);
+    if (postscriptName)
+      free(postscriptName);
     
-    if (this->family)
-      free(this->family);
+    if (family)
+      free(family);
     
-    if (this->style)
-      free(this->style);
+    if (style)
+      free(style);
     
-    this->postscriptName = NULL;
-    this->family = NULL;
-    this->style = NULL;
+    postscriptName = NULL;
+    family = NULL;
+    style = NULL;
   }
   
 private:
