@@ -24,5 +24,13 @@ private:
   const char *postscriptName;
 };
 
+class ResultSet : public std::vector<FontManagerResult *> {
+public:
+  ~ResultSet() {
+    for (ResultSet::iterator it = this->begin(); it != this->end(); it++) {
+      delete *it;
+    }
+  }
+};
 
 #endif
