@@ -3,8 +3,6 @@
 #include "FontDescriptor.h"
 #include "FontManagerResult.h"
 
-using namespace std;
-
 ResultSet *getAvailableFonts() {
   NSArray *urls = (NSArray *) CTFontManagerCopyAvailableFontURLs();
   ResultSet *results = new ResultSet();
