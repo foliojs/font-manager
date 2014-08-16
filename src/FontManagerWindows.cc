@@ -1,5 +1,3 @@
-#include <node.h>
-#include <v8.h>
 #include <dwrite.h>
 #include "FontDescriptor.h"
 #include "FontManagerResult.h"
@@ -28,8 +26,8 @@ WCHAR *getPostscriptName(IDWriteFont *font) {
   return psName;
 }
 
-Handle<Value> resultFromFont(IDWriteFont *font) {
-  Handle<Value> res;
+FontManagerResult *resultFromFont(IDWriteFont *font) {
+  FontManagerResult *res = NULL;
   IDWriteFontFace *face = NULL;
   unsigned int numFiles = 0;
   WCHAR *psName = getPostscriptName(font);
@@ -62,22 +60,17 @@ Handle<Value> resultFromFont(IDWriteFont *font) {
       name = (WCHAR *) malloc((nameLength + 1) * sizeof(WCHAR));
       HR(fileLoader->GetFilePathFromKey(referenceKey, referenceKeySize, name, nameLength + 1));
 
-      res = createResult((uint16_t *) name, (uint16_t *) psName);
+      res = new FontManagerResult((uint16_t *) name, (uint16_t *) psName);
       free(name);
-    } else {
-      res = Null();
     }
-  } else {
-    res = Null();
   }
 
   free(psName);
   return res;
 }
 
-Handle<Value> getAvailableFonts(const Arguments& args) {
-  HandleScope scope;
-  Local<Array> res = Array::New(0);
+ResultSet *getAvailableFonts(const Arguments& args) {
+  ResultSet *res = new ResultSet();
   int count = 0;
 
   IDWriteFactory *factory = NULL;
@@ -105,11 +98,11 @@ Handle<Value> getAvailableFonts(const Arguments& args) {
     for (int j = 0; j < fontCount; j++) {
       IDWriteFont *font = NULL;
       HR(family->GetFont(j, &font));
-      res->Set(count++, resultFromFont(font));
+      res->push_back(resultFromFont(font));
     }
   }
 
-  return scope.Close(res);
+  return res;
 }
 
 WCHAR *utf8ToUtf16(char *input) {
@@ -178,7 +171,9 @@ IDWriteFont *findFontByPostscriptName(IDWriteFontCollection *collection, FontDes
   return NULL;
 }
 
-Handle<Value> findFonts(FontDescriptor *desc) {
+ResultSet *findFonts(FontDescriptor *desc) {
+  ResultSet *res = new ResultSet();
+  
   IDWriteFactory *factory = NULL;
   HR(DWriteCreateFactory(
     DWRITE_FACTORY_TYPE_SHARED,
@@ -193,26 +188,24 @@ Handle<Value> findFonts(FontDescriptor *desc) {
   if (desc->family) {
     IDWriteFontList *fonts = findFontsByFamily(collection, desc);
     int fontCount = fonts ? fonts->GetFontCount() : 0;
-    Local<Array> res = Array::New(fontCount);
 
     for (int j = 0; j < fontCount; j++) {
       IDWriteFont *font = NULL;
       HR(fonts->GetFont(j, &font));
-      res->Set(j, resultFromFont(font));
+      res->push_back(resultFromFont(font));
     }
 
     return res;
   } else if (desc->postscriptName) {
     IDWriteFont *font = findFontByPostscriptName(collection, desc);
-    Local<Array> res = Array::New(1);
-    res->Set(0, resultFromFont(font));
+    res->push_back(resultFromFont(font));
     return res;
   }
 
-  return Array::New(0);
+  return res;
 }
 
-Handle<Value> findFont(FontDescriptor *desc) {
+FontManagerResult *findFont(FontDescriptor *desc) {
   IDWriteFactory *factory = NULL;
   HR(DWriteCreateFactory(
     DWRITE_FACTORY_TYPE_SHARED,
@@ -237,7 +230,7 @@ Handle<Value> findFont(FontDescriptor *desc) {
     return resultFromFont(font);
   }
 
-  return Null();
+  return NULL;
 }
 
 // custom text renderer used to determine the fallback font for a given char
@@ -356,8 +349,8 @@ public:
   }
 };
 
-Handle<Value> substituteFont(char *postscriptName, char *string) {
-  Handle<Value> res = Null();
+FontManagerResult *substituteFont(char *postscriptName, char *string) {
+  FontManagerResult *res = NULL;
 
   IDWriteFactory *factory = NULL;
   HR(DWriteCreateFactory(
