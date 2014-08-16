@@ -1,32 +1,26 @@
 #include <Foundation/Foundation.h>
 #include <CoreText/CoreText.h>
-#include <node.h>
-#include <v8.h>
 #include "FontDescriptor.h"
 #include "FontManagerResult.h"
 
-Local<Object> createResult(NSString *path, NSString *postscriptName) {
-  return createResult([path UTF8String], [postscriptName UTF8String]);
-}
+using namespace std;
 
-Handle<Value> getAvailableFonts(const Arguments& args) {
-  HandleScope scope;
-    
+ResultSet *getAvailableFonts() {
   NSArray *urls = (NSArray *) CTFontManagerCopyAvailableFontURLs();
-  Local<Array> res = Array::New([urls count]);
+  ResultSet *results = new ResultSet();
   
-  int i = 0;
+  // int i = 0;
   for (NSURL *url in urls) {
     NSString *path = [url path];
     NSString *psName = [[url fragment] stringByReplacingOccurrencesOfString:@"postscript-name=" withString:@""];
-    res->Set(i++, createResult(path, psName));
+    results->push_back(new FontManagerResult([path UTF8String], [psName UTF8String]));
   }
   
   [urls release];
-  return scope.Close(res);
+  return results;
 }
 
-// converts a Core Text weight (-1 to +1) to a standard weight (100 to 900)
+// converts a CoreText weight (-1 to +1) to a standard weight (100 to 900)
 static int convertWeight(float unit) {
   if (unit < 0) {
     return 100 + (1 + unit) * 300;
@@ -35,7 +29,7 @@ static int convertWeight(float unit) {
   }
 }
 
-// converts a Core Text width (-1 to +1) to a standard width (1 to 9)
+// converts a CoreText width (-1 to +1) to a standard width (1 to 9)
 static int convertWidth(float unit) {
   if (unit < 0) {
     return 1 + (1 + unit) * 4;
@@ -116,11 +110,10 @@ int metricForMatch(CTFontDescriptorRef match, FontDescriptor *desc) {
   return metric;
 }
 
-Handle<Value> findFonts(FontDescriptor *desc) {
+ResultSet *findFonts(FontDescriptor *desc) {
   CTFontDescriptorRef descriptor = getFontDescriptor(desc);
   NSArray *matches = (NSArray *) CTFontDescriptorCreateMatchingFontDescriptors(descriptor, NULL);
-  Local<Array> res = Array::New(0);
-  int count = 0;
+  ResultSet *results = new ResultSet();
   
   NSArray *sorted = [matches sortedArrayUsingComparator:^NSComparisonResult(id a, id b) {
     int ma = metricForMatch((CTFontDescriptorRef) a, desc);
@@ -135,7 +128,7 @@ Handle<Value> findFonts(FontDescriptor *desc) {
     if (mb < 10000) {
       NSURL *url = (NSURL *) CTFontDescriptorCopyAttribute(match, kCTFontURLAttribute);
       NSString *ps = (NSString *) CTFontDescriptorCopyAttribute(match, kCTFontNameAttribute);
-      res->Set(count++, createResult([url path], ps));
+      results->push_back(new FontManagerResult([[url path] UTF8String], [ps UTF8String]));
       [url release];
       [ps release];
     }
@@ -143,10 +136,11 @@ Handle<Value> findFonts(FontDescriptor *desc) {
   
   [sorted release];
   [matches release];
-  return res;
+  return results;
 }
 
-Handle<Value> findFont(FontDescriptor *desc) {  
+FontManagerResult *findFont(FontDescriptor *desc) {  
+  FontManagerResult *res = NULL;
   CTFontDescriptorRef descriptor = getFontDescriptor(desc);
   NSArray *matches = (NSArray *) CTFontDescriptorCreateMatchingFontDescriptors(descriptor, NULL);
   
@@ -171,20 +165,20 @@ Handle<Value> findFont(FontDescriptor *desc) {
   if (best) {    
     NSURL *url = (NSURL *) CTFontDescriptorCopyAttribute(best, kCTFontURLAttribute);
     NSString *ps = (NSString *) CTFontDescriptorCopyAttribute(best, kCTFontNameAttribute);
-    Local<Object> res = createResult([url path], ps);
+    res = new FontManagerResult([[url path] UTF8String], [ps UTF8String]);
 
     [url release];
     [ps release];
     [matches release];
-    
-    return res;
   }
   
   CFRelease(descriptor);
-  return Null();
+  return res;
 }
 
-Handle<Value> substituteFont(char *postscriptName, char *string) {
+FontManagerResult *substituteFont(char *postscriptName, char *string) {
+  FontManagerResult *res = NULL;
+  
   // create a font descriptor to find the font by its postscript name
   // we don't use CTFontCreateWithName because that will return a best
   // match even if the font doesn't actually exist.
@@ -207,7 +201,7 @@ Handle<Value> substituteFont(char *postscriptName, char *string) {
     // finally, create and return a result object for this substitute font
     NSURL *url = (NSURL *) CTFontDescriptorCopyAttribute(substituteDescriptor, kCTFontURLAttribute);
     NSString *ps = (NSString *) CTFontDescriptorCopyAttribute(substituteDescriptor, kCTFontNameAttribute);
-    Local<Object> res = createResult([url path], ps);
+    res = new FontManagerResult([[url path] UTF8String], [ps UTF8String]);
     
     CFRelease(font);
     [str release];
@@ -215,9 +209,7 @@ Handle<Value> substituteFont(char *postscriptName, char *string) {
     CFRelease(substituteDescriptor);
     [url release];
     [ps release];
-    
-    return res;
   }
   
-  return Null();
+  return res;
 }
