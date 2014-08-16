@@ -1,15 +1,11 @@
 #include <fontconfig/fontconfig.h>
-#include <node.h>
-#include <v8.h>
 #include "FontDescriptor.h"
 #include "FontManagerResult.h"
 
-Local<Array> arrayFromFontSet(FcFontSet *fs) {
+ResultSet *getResultSet(FcFontSet *fs) {
+  ResultSet *res = new ResultSet();
   if (!fs)
-    return Array::New(0);
-
-  Local<Array> res = Array::New(fs->nfont);
-  int count = 0;
+    return res;
 
   for (int i = 0; i < fs->nfont; i++) {
     FcPattern *font = fs->fonts[i];
@@ -18,28 +14,26 @@ Local<Array> arrayFromFontSet(FcFontSet *fs) {
 
     if (FcPatternGetString(font, FC_FILE, 0, &file) == FcResultMatch &&
         FcPatternGetString(font, FC_POSTSCRIPT_NAME, 0, &psName) == FcResultMatch) {
-      res->Set(count++, createResult((char *)file, (char *)psName));
+      res->push_back(new FontManagerResult((char *)file, (char *)psName));
     }
   }
 
   return res;
 }
 
-Handle<Value> getAvailableFonts(const Arguments& args) {
-  HandleScope scope;
-    
+ResultSet *getAvailableFonts(const Arguments& args) {
   FcInit();
 
   FcPattern *pattern = FcPatternCreate();
   FcObjectSet *os = FcObjectSetBuild(FC_POSTSCRIPT_NAME, FC_FILE, NULL);
   FcFontSet *fs = FcFontList(NULL, pattern, os);
-  Local<Array> res = arrayFromFontSet(fs);
+  ResultSet *res = getResultSet(fs);
   
   FcPatternDestroy(pattern);
   FcObjectSetDestroy(os);
   FcFontSetDestroy(fs);
 
-  return scope.Close(res);
+  return res;
 }
 
 int convertWeight(FontWeight weight) {
@@ -120,12 +114,12 @@ FcPattern *createPattern(FontDescriptor *desc) {
   return pattern;
 }
 
-Handle<Value> findFonts(FontDescriptor *desc) {
+ResultSet *findFonts(FontDescriptor *desc) {
   FcPattern *pattern = createPattern(desc);
   FcObjectSet *os = FcObjectSetBuild(FC_POSTSCRIPT_NAME, FC_FILE, NULL);
   FcFontSet *fs = FcFontList(NULL, pattern, os);
 
-  Local<Array> res = arrayFromFontSet(fs);
+  ResultSet *res = getResultSet(fs);
 
   FcFontSetDestroy(fs);
   FcPatternDestroy(pattern);
@@ -134,7 +128,7 @@ Handle<Value> findFonts(FontDescriptor *desc) {
   return res;
 }
 
-Handle<Value> findFont(FontDescriptor *desc) {
+FontManagerResult *findFont(FontDescriptor *desc) {
   FcPattern *pattern = createPattern(desc);
   FcConfigSubstitute(NULL, pattern, FcMatchPattern);
   FcDefaultSubstitute(pattern);
@@ -144,13 +138,11 @@ Handle<Value> findFont(FontDescriptor *desc) {
 
   FcChar8 *file;
   FcChar8 *psName;
-  Handle<Value> res;
+  FontManagerResult *res = NULL;
 
   if (FcPatternGetString(font, FC_FILE, 0, &file) == FcResultMatch &&
       FcPatternGetString(font, FC_POSTSCRIPT_NAME, 0, &psName) == FcResultMatch) {
-    res = createResult((char *)file, (char *)psName);
-  } else {
-    res = Null();
+    res = new FontManagerResult((char *)file, (char *)psName);
   }
 
   FcPatternDestroy(pattern);
@@ -159,7 +151,7 @@ Handle<Value> findFont(FontDescriptor *desc) {
   return res;
 }
 
-Handle<Value> substituteFont(char *postscriptName, char *string) {
+FontManagerResult *substituteFont(char *postscriptName, char *string) {
   FcInit();
 
   // create a pattern with the postscript name
@@ -188,14 +180,12 @@ Handle<Value> substituteFont(char *postscriptName, char *string) {
 
   FcChar8 *file;
   FcChar8 *psName;
-  Handle<Value> res;
+  FontManagerResult *res = NULL;
 
   // create a result object if we found a match
   if (FcPatternGetString(font, FC_FILE, 0, &file) == FcResultMatch &&
       FcPatternGetString(font, FC_POSTSCRIPT_NAME, 0, &psName) == FcResultMatch) {
-    res = createResult((char *)file, (char *)psName);
-  } else {
-    res = Null();
+    res = new FontManagerResult((char *)file, (char *)psName);
   }
 
   FcPatternDestroy(pattern);

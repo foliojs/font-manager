@@ -7,7 +7,6 @@ ResultSet *getAvailableFonts() {
   NSArray *urls = (NSArray *) CTFontManagerCopyAvailableFontURLs();
   ResultSet *results = new ResultSet();
   
-  // int i = 0;
   for (NSURL *url in urls) {
     NSString *path = [url path];
     NSString *psName = [[url fragment] stringByReplacingOccurrencesOfString:@"postscript-name=" withString:@""];
