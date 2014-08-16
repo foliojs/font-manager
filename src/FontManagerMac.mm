@@ -131,6 +131,7 @@ ResultSet *findFonts(FontDescriptor *desc) {
     }
   }
   
+  CFRelease(descriptor);
   [sorted release];
   [matches release];
   return results;
