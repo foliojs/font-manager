@@ -129,7 +129,6 @@ ResultSet *findFonts(FontDescriptor *desc) {
   }
   
   CFRelease(descriptor);
-  [sorted release];
   [matches release];
   return results;
 }
@@ -180,7 +179,6 @@ FontManagerResult *substituteFont(char *postscriptName, char *string) {
   NSString *ps = [NSString stringWithUTF8String:postscriptName];
   NSDictionary *attrs = @{(id)kCTFontNameAttribute: ps};
   CTFontDescriptorRef descriptor = CTFontDescriptorCreateWithAttributes((CFDictionaryRef) attrs);
-  [attrs release];
   
   // find a match
   CTFontDescriptorRef match = CTFontDescriptorCreateMatchingFontDescriptor(descriptor, NULL);
@@ -195,15 +193,14 @@ FontManagerResult *substituteFont(char *postscriptName, char *string) {
     
     // finally, create and return a result object for this substitute font
     NSURL *url = (NSURL *) CTFontDescriptorCopyAttribute(substituteDescriptor, kCTFontURLAttribute);
-    NSString *ps = (NSString *) CTFontDescriptorCopyAttribute(substituteDescriptor, kCTFontNameAttribute);
-    res = new FontManagerResult([[url path] UTF8String], [ps UTF8String]);
+    NSString *psName = (NSString *) CTFontDescriptorCopyAttribute(substituteDescriptor, kCTFontNameAttribute);
+    res = new FontManagerResult([[url path] UTF8String], [psName UTF8String]);
     
     CFRelease(font);
-    [str release];
     CFRelease(substituteFont);
     CFRelease(substituteDescriptor);
     [url release];
-    [ps release];
+    [psName release];
   }
   
   return res;
