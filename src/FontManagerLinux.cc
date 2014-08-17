@@ -21,7 +21,7 @@ ResultSet *getResultSet(FcFontSet *fs) {
   return res;
 }
 
-ResultSet *getAvailableFonts(const Arguments& args) {
+ResultSet *getAvailableFonts() {
   FcInit();
 
   FcPattern *pattern = FcPatternCreate();
