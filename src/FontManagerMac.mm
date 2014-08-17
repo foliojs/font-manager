@@ -82,10 +82,7 @@ CTFontDescriptorRef getFontDescriptor(FontDescriptor *desc) {
   }
 
   // create a font descriptor and search for matches
-  CTFontDescriptorRef descriptor = CTFontDescriptorCreateWithAttributes((CFDictionaryRef) attrs);
-  [attrs release];
-  
-  return descriptor;
+  return CTFontDescriptorCreateWithAttributes((CFDictionaryRef) attrs);  
 }
 
 int metricForMatch(CTFontDescriptorRef match, FontDescriptor *desc) {
