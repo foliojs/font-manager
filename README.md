@@ -53,27 +53,31 @@ allowed are documented below.
 
 #### Weights
 
-    Thin        = 100,
-    UltraLight  = 200,
-    Light       = 300,
-    Normal      = 400,
-    Medium      = 500,
-    SemiBold    = 600,
-    Bold        = 700,
-    UltraBold   = 800,
-    Heavy       = 900
+Value   | Name                     
+------- | -------------------------
+100     | Thin                     
+200     | Ultra Light              
+300     | Light                    
+**400** | **Normal** (default)     
+500     | Medium                   
+600     | Semi Bold                
+700     | Bold                     
+800     | Ultra Bold               
+900     | Heavy                    
 
 #### Widths
 
-    UltraCondensed = 1,
-    ExtraCondensed = 2,
-    Condensed      = 3,
-    SemiCondensed  = 4,
-    Normal         = 5,
-    SemiExpanded   = 6,
-    Expanded       = 7,
-    ExtraExpanded  = 8,
-    UltraExpanded  = 9
+Value | Name                         
+----- | -----------------------------
+1     | Ultra Condensed              
+2     | Extra Condensed              
+3     | Condensed                    
+4     | Semi Condensed               
+**5** | **Normal** (default)         
+6     | Semi Expanded                
+7     | Expanded                     
+8     | Extra Expanded               
+9     | Ultra Expanded               
 
 ## License
 
