@@ -55,17 +55,17 @@ Name             | Type    | Description
 
 #### Weights
 
-Value   | Name
-------- | -------------------------
-100     | Thin
-200     | Ultra Light
-300     | Light
-**400** | **Normal** (default)
-500     | Medium
-600     | Semi Bold
-700     | Bold
-800     | Ultra Bold
-900     | Heavy
+Value | Name
+----- | -------------------------
+100   | Thin
+200   | Ultra Light
+300   | Light
+400   | Normal
+500   | Medium
+600   | Semi Bold
+700   | Bold
+800   | Ultra Bold
+900   | Heavy
 
 #### Widths
 
@@ -75,7 +75,7 @@ Value | Name
 2     | Extra Condensed
 3     | Condensed
 4     | Semi Condensed
-**5** | **Normal** (default)
+5     | Normal
 6     | Semi Expanded
 7     | Expanded
 8     | Extra Expanded
