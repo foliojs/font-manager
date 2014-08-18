@@ -1,10 +1,24 @@
-#include <dwrite.h>
 #include "FontDescriptor.h"
 #include "FontManagerResult.h"
+#include <dwrite.h>
 
 // throws a JS error when there is some exception in DirectWrite
 #define HR(hr) \
-  if (FAILED(hr)) ThrowException(Exception::Error(String::New("Font loading error")));
+  if (FAILED(hr)) throw "Font loading error";
+
+WCHAR *utf8ToUtf16(char *input) {
+  unsigned int len = MultiByteToWideChar(CP_UTF8, 0, input, -1, NULL, 0);
+  WCHAR *output = new WCHAR[len];
+  MultiByteToWideChar(CP_UTF8, 0, input, -1, output, len);
+  return output;
+}
+
+char *utf16ToUtf8(WCHAR *input) {
+  unsigned int len = WideCharToMultiByte(CP_UTF8, 0, input, -1, NULL, 0, NULL, NULL);
+  char *output = new char[len];
+  WideCharToMultiByte(CP_UTF8, 0, input, -1, output, len, NULL, NULL);
+  return output;
+}
 
 // gets the postscript name for a font
 WCHAR *getPostscriptName(IDWriteFont *font) {
@@ -57,19 +71,19 @@ FontManagerResult *resultFromFont(IDWriteFont *font) {
       HR(files[0].GetReferenceKey(&referenceKey, &referenceKeySize));
       HR(fileLoader->GetFilePathLengthFromKey(referenceKey, referenceKeySize, &nameLength));
 
-      name = (WCHAR *) malloc((nameLength + 1) * sizeof(WCHAR));
+      name = new WCHAR[nameLength + 1];
       HR(fileLoader->GetFilePathFromKey(referenceKey, referenceKeySize, name, nameLength + 1));
 
-      res = new FontManagerResult((uint16_t *) name, (uint16_t *) psName);
-      free(name);
+      res = new FontManagerResult(utf16ToUtf8(name), utf16ToUtf8(psName));
+      delete name;
     }
   }
 
-  free(psName);
+  delete psName;
   return res;
 }
 
-ResultSet *getAvailableFonts(const Arguments& args) {
+ResultSet *getAvailableFonts() {
   ResultSet *res = new ResultSet();
   int count = 0;
 
@@ -103,13 +117,6 @@ ResultSet *getAvailableFonts(const Arguments& args) {
   }
 
   return res;
-}
-
-WCHAR *utf8ToUtf16(char *input) {
-  unsigned int len = MultiByteToWideChar(CP_UTF8, 0, input, -1, NULL, 0);
-  WCHAR *output = new WCHAR[len];
-  MultiByteToWideChar(CP_UTF8, 0, input, -1, output, len);
-  return output;
 }
 
 IDWriteFontList *findFontsByFamily(IDWriteFontCollection *collection, FontDescriptor *desc) {
