@@ -31,7 +31,7 @@ fontManager.findFonts({ family: 'Helvetica' });
 fontManager.findFont({ family: 'Helvetica Neue', weight: 700 });
 //=> { path: '/path/to/Helvetica.ttf', postscriptName: 'Helvetica-Bold' }
 
-// substitute the font with the given postscript name 
+// substitute the font with the given postscript name
 // with another font that contains the given characters
 fontManager.substituteFont('TimesNewRomanPSMT', '汉字')
 //=> { path: '/Library/Fonts/Songti.ttc', postscriptName: 'STSongti-SC-Regular' }
@@ -55,31 +55,31 @@ Name             | Type    | Description
 
 #### Weights
 
-Value   | Name                     
+Value   | Name
 ------- | -------------------------
-100     | Thin                     
-200     | Ultra Light              
-300     | Light                    
-**400** | **Normal** (default)     
-500     | Medium                   
-600     | Semi Bold                
-700     | Bold                     
-800     | Ultra Bold               
-900     | Heavy                    
+100     | Thin
+200     | Ultra Light
+300     | Light
+**400** | **Normal** (default)
+500     | Medium
+600     | Semi Bold
+700     | Bold
+800     | Ultra Bold
+900     | Heavy
 
 #### Widths
 
-Value | Name                         
+Value | Name
 ----- | -----------------------------
-1     | Ultra Condensed              
-2     | Extra Condensed              
-3     | Condensed                    
-4     | Semi Condensed               
-**5** | **Normal** (default)         
-6     | Semi Expanded                
-7     | Expanded                     
-8     | Extra Expanded               
-9     | Ultra Expanded               
+1     | Ultra Condensed
+2     | Extra Condensed
+3     | Condensed
+4     | Semi Condensed
+**5** | **Normal** (default)
+6     | Semi Expanded
+7     | Expanded
+8     | Extra Expanded
+9     | Ultra Expanded
 
 ## License
 
