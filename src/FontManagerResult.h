@@ -2,6 +2,7 @@
 #define FONT_MANAGER_RESULT_H
 #include <v8.h>
 #include <vector>
+#include <string>
 
 using namespace v8;
 
@@ -14,14 +15,14 @@ public:
   
   Local<Object> toJSObject() {
     Local<Object> res = Object::New();
-    res->Set(String::NewSymbol("path"), String::New(path));
-    res->Set(String::NewSymbol("postscriptName"), String::New(postscriptName));
+    res->Set(String::NewSymbol("path"), String::New(path.c_str()));
+    res->Set(String::NewSymbol("postscriptName"), String::New(postscriptName.c_str()));
     return res;
   }
   
 private:
-  const char *path;
-  const char *postscriptName;
+  std::string path;
+  std::string postscriptName;
 };
 
 class ResultSet : public std::vector<FontManagerResult *> {
