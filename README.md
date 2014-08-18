@@ -43,13 +43,15 @@ Font descriptors are normal JavaScript objects that describe characteristics of
 a font.  They are passed to the `findFonts` and `findFont` methods.  The fields
 allowed are documented below.
 
-* `postscriptName` (string) - the PostScript name of the font (e.g 'Arial-BoldMT'). This uniquely identities a font in most cases.
-* `family` (string) - the font family name (e.g 'Arial')
-* `style` (string) - the font style name (e.g. 'Bold')
-* `weight` (number) - the font weight (e.g. 400 for normal weight). Should be a multiple of 100, between 100 and 900. See [below](#weights) for weight documentation.
-* `width` (number) - the font width (e.g. 5 for normal width). Should be an integer between 1 and 9. See [below](#widths) for width documentation.
-* `italic` (boolean) - whether the font is italic or not.
-* `monospace` (boolean) - whether the font is monospace or not.
+Name             | Type    | Description
+---------------- | ------- | -----------
+`postscriptName` | string  | The PostScript name of the font (e.g `'Arial-BoldMT'`). This uniquely identities a font in most cases.
+`family`         | string  | The font family name (e.g `'Arial'`)
+`style`          | string  | The font style name (e.g. `'Bold'`)
+`weight`         | number  | The font weight (e.g. `400` for normal weight). Should be a multiple of 100, between 100 and 900. See [below](#weights) for weight documentation.
+`width`          | number  | The font width (e.g. `5` for normal width). Should be an integer between 1 and 9. See [below](#widths) for width documentation.
+`italic`         | boolean | Whether the font is italic or not.
+`monospace`      | boolean | Whether the font is monospace or not.
 
 #### Weights
 
