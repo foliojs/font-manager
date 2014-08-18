@@ -23,7 +23,7 @@ var fontManager = require('font-manager');
 fontManager.getAvailableFonts();
 //=> [{ path: '/path/to/font.ttf', postscriptName: 'name' }, ...]
 
-// find fonts with characteristics
+// find fonts matching a font descriptor (see below for a list of supported fields)
 fontManager.findFonts({ family: 'Helvetica' });
 //=> [{ path: '/path/to/Helvetica.ttf', postscriptName: 'Helvetica' }, ...]
 
@@ -36,6 +36,44 @@ fontManager.findFont({ family: 'Helvetica Neue', weight: 700 });
 fontManager.substituteFont('TimesNewRomanPSMT', '汉字')
 //=> { path: '/Library/Fonts/Songti.ttc', postscriptName: 'STSongti-SC-Regular' }
 ```
+
+### Font Descriptor
+
+Font descriptors are normal JavaScript objects that describe characteristics of
+a font.  They are passed to the `findFonts` and `findFont` methods.  The fields
+allowed are documented below.
+
+* `postscriptName` (string) - the PostScript name of the font (e.g 'Arial-BoldMT'). This uniquely identities a font in most cases.
+* `family` (string) - the font family name (e.g 'Arial')
+* `style` (string) - the font style name (e.g. 'Bold')
+* `weight` (number) - the font weight (e.g. 400 for normal weight). Should be a multiple of 100, between 100 and 900. See [below](#weights) for weight documentation.
+* `width` (number) - the font width (e.g. 5 for normal width). Should be an integer between 1 and 9. See [below](#widths) for width documentation.
+* `italic` (boolean) - whether the font is italic or not.
+* `monospace` (boolean) - whether the font is monospace or not.
+
+#### Weights
+
+    Thin        = 100,
+    UltraLight  = 200,
+    Light       = 300,
+    Normal      = 400,
+    Medium      = 500,
+    SemiBold    = 600,
+    Bold        = 700,
+    UltraBold   = 800,
+    Heavy       = 900
+
+#### Widths
+
+    UltraCondensed = 1,
+    ExtraCondensed = 2,
+    Condensed      = 3,
+    SemiCondensed  = 4,
+    Normal         = 5,
+    SemiExpanded   = 6,
+    Expanded       = 7,
+    ExtraExpanded  = 8,
+    UltraExpanded  = 9
 
 ## License
 
