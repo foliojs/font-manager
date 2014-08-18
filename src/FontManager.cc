@@ -98,7 +98,7 @@ Handle<Value> getAvailableFonts(const Arguments& args) {
   
   if (async) {
     if (args.Length() < 1 || !args[0]->IsFunction()) {
-      ThrowException(Exception::TypeError(String::New("Expecting a callback")));
+      ThrowException(Exception::TypeError(String::New("Expected a callback")));
       return scope.Close(Undefined());
     }
     
