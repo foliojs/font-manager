@@ -40,8 +40,8 @@ fontManager.substituteFont('TimesNewRomanPSMT', '汉字')
 ### Font Descriptor
 
 Font descriptors are normal JavaScript objects that describe characteristics of
-a font.  They are passed to the `findFonts` and `findFont` methods.  The fields
-allowed are documented below.
+a font.  They are passed to the `findFonts` and `findFont` methods.  Any combination
+of the fields documented below can be used to find fonts.
 
 Name             | Type    | Description
 ---------------- | ------- | -----------
