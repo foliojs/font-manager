@@ -24,15 +24,12 @@ fontManager.getAvailableFonts();
 //=> [{ path: '/path/to/font.ttf', postscriptName: 'name' }, ...]
 
 // find fonts with characteristics
-var desc = new fontManager.FontDescriptor();
-desc.family = "Helvetica Neue";
-
-fontManager.findFonts(desc);
-//=> [{ path: '/path/to/Helvetica.ttf', postscriptName: 'Helvetica-Regular' }, ...]
+fontManager.findFonts({ family: 'Helvetica' });
+//=> [{ path: '/path/to/Helvetica.ttf', postscriptName: 'Helvetica' }, ...]
 
 // find the font with the best match
-fontManager.findFont(desc);
-//=> { path: '/path/to/Helvetica.ttf', postscriptName: 'Helvetica-Regular' }
+fontManager.findFont({ family: 'Helvetica Neue', weight: 700 });
+//=> { path: '/path/to/Helvetica.ttf', postscriptName: 'Helvetica-Bold' }
 
 // substitute the font with the given postscript name 
 // with another font that contains the given characters
