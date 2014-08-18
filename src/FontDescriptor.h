@@ -58,13 +58,13 @@ public:
   
   ~FontDescriptor() {
     if (postscriptName)
-      free(postscriptName);
+      delete postscriptName;
     
     if (family)
-      free(family);
+      delete family;
     
     if (style)
-      free(style);
+      delete style;
     
     postscriptName = NULL;
     family = NULL;
@@ -77,9 +77,8 @@ private:
     
     if (value->IsString()) {
       v8::String::Utf8Value string(value);
-      char *str = (char *) malloc(string.length() + 1);
+      char *str = new char[string.length() + 1];
       strcpy(str, *string);
-      str[string.length()] = '\0';
       return str;
     }
   

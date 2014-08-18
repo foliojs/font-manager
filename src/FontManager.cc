@@ -210,11 +210,11 @@ Handle<Value> substituteFont(const Arguments& args) {
     }
     
     // copy the strings since the JS garbage collector might run before the async request is finished
-    char *ps = new char[postscriptName.length()];
-    memcpy(ps, *postscriptName, postscriptName.length());
+    char *ps = new char[postscriptName.length() + 1];
+    strcpy(ps, *postscriptName);
   
-    char *sub = new char[substitutionString.length()];
-    memcpy(sub, *substitutionString, substitutionString.length());
+    char *sub = new char[substitutionString.length() + 1];
+    strcpy(sub, *substitutionString);
     
     AsyncRequest *req = new AsyncRequest(args[2]);
     req->postscriptName = ps;
