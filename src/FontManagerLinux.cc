@@ -1,40 +1,5 @@
 #include <fontconfig/fontconfig.h>
 #include "FontDescriptor.h"
-#include "FontManagerResult.h"
-
-ResultSet *getResultSet(FcFontSet *fs) {
-  ResultSet *res = new ResultSet();
-  if (!fs)
-    return res;
-
-  for (int i = 0; i < fs->nfont; i++) {
-    FcPattern *font = fs->fonts[i];
-    FcChar8 *file;
-    FcChar8 *psName;
-
-    if (FcPatternGetString(font, FC_FILE, 0, &file) == FcResultMatch &&
-        FcPatternGetString(font, FC_POSTSCRIPT_NAME, 0, &psName) == FcResultMatch) {
-      res->push_back(new FontManagerResult((char *)file, (char *)psName));
-    }
-  }
-
-  return res;
-}
-
-ResultSet *getAvailableFonts() {
-  FcInit();
-
-  FcPattern *pattern = FcPatternCreate();
-  FcObjectSet *os = FcObjectSetBuild(FC_POSTSCRIPT_NAME, FC_FILE, NULL);
-  FcFontSet *fs = FcFontList(NULL, pattern, os);
-  ResultSet *res = getResultSet(fs);
-  
-  FcPatternDestroy(pattern);
-  FcObjectSetDestroy(os);
-  FcFontSetDestroy(fs);
-
-  return res;
-}
 
 int convertWeight(FontWeight weight) {
   switch (weight) {
@@ -58,6 +23,31 @@ int convertWeight(FontWeight weight) {
       return FC_WEIGHT_ULTRABLACK;
     default:
       return FC_WEIGHT_REGULAR;
+  }
+}
+
+FontWeight convertWeight(int weight) {
+  switch (weight) {
+    case FC_WEIGHT_THIN:
+      return FontWeightThin;
+    case FC_WEIGHT_ULTRALIGHT:
+      return FontWeightUltraLight;
+    case FC_WEIGHT_LIGHT:
+      return FontWeightLight;
+    case FC_WEIGHT_REGULAR:
+      return FontWeightNormal;
+    case FC_WEIGHT_MEDIUM:
+      return FontWeightMedium;
+    case FC_WEIGHT_SEMIBOLD:
+      return FontWeightSemiBold;
+    case FC_WEIGHT_BOLD:
+      return FontWeightBold;
+    case FC_WEIGHT_EXTRABOLD:
+      return FontWeightUltraBold;
+    case FC_WEIGHT_ULTRABLACK:
+      return FontWeightHeavy;
+    default:
+      return FontWeightNormal;
   }
 }
 
@@ -85,6 +75,85 @@ int convertWidth(FontWidth width) {
       return FC_WIDTH_NORMAL;
   }
 }
+
+FontWidth convertWidth(int width) {
+  switch (width) {
+    case FC_WIDTH_ULTRACONDENSED:
+      return FontWidthUltraCondensed;
+    case FC_WIDTH_EXTRACONDENSED:
+      return FontWidthExtraCondensed;
+    case FC_WIDTH_CONDENSED:
+      return FontWidthCondensed;
+    case FC_WIDTH_SEMICONDENSED:
+      return FontWidthSemiCondensed;
+    case FC_WIDTH_NORMAL:
+      return FontWidthNormal;
+    case FC_WIDTH_SEMIEXPANDED:
+      return FontWidthSemiExpanded;
+    case FC_WIDTH_EXPANDED:
+      return FontWidthExpanded;
+    case FC_WIDTH_EXTRAEXPANDED:
+      return FontWidthExtraExpanded;
+    case FC_WIDTH_ULTRAEXPANDED:
+      return FontWidthUltraExpanded;
+    default:
+      return FontWidthNormal;
+  }
+}
+
+FontDescriptor *createFontDescriptor(FcPattern *pattern) {
+  FcChar8 *path, *psName, *family, *style;
+  int weight, width, slant, spacing;
+
+  FcPatternGetString(pattern, FC_FILE, 0, &path);
+  FcPatternGetString(pattern, FC_POSTSCRIPT_NAME, 0, &psName);
+  FcPatternGetString(pattern, FC_FAMILY, 0, &family);
+  FcPatternGetString(pattern, FC_STYLE, 0, &style);
+
+  FcPatternGetInteger(pattern, FC_WEIGHT, 0, &weight);
+  FcPatternGetInteger(pattern, FC_WIDTH, 0, &width);
+  FcPatternGetInteger(pattern, FC_SLANT, 0, &slant);
+  FcPatternGetInteger(pattern, FC_SPACING, 0, &spacing);
+
+  return new FontDescriptor(
+    (char *) path,
+    (char *) psName,
+    (char *) family,
+    (char *) style,
+    convertWeight(weight),
+    convertWidth(width),
+    slant == FC_SLANT_ITALIC,
+    spacing == FC_MONO
+  );
+}
+
+ResultSet *getResultSet(FcFontSet *fs) {
+  ResultSet *res = new ResultSet();
+  if (!fs)
+    return res;
+
+  for (int i = 0; i < fs->nfont; i++) {
+    res->push_back(createFontDescriptor(fs->fonts[i]));
+  }
+
+  return res;
+}
+
+ResultSet *getAvailableFonts() {
+  FcInit();
+
+  FcPattern *pattern = FcPatternCreate();
+  FcObjectSet *os = FcObjectSetBuild(FC_FILE, FC_POSTSCRIPT_NAME, FC_FAMILY, FC_STYLE, FC_WEIGHT, FC_WIDTH, FC_SLANT, FC_SPACING, NULL);
+  FcFontSet *fs = FcFontList(NULL, pattern, os);
+  ResultSet *res = getResultSet(fs);
+  
+  FcPatternDestroy(pattern);
+  FcObjectSetDestroy(os);
+  FcFontSetDestroy(fs);
+
+  return res;
+}
+
 
 FcPattern *createPattern(FontDescriptor *desc) {
   FcInit();
@@ -116,9 +185,8 @@ FcPattern *createPattern(FontDescriptor *desc) {
 
 ResultSet *findFonts(FontDescriptor *desc) {
   FcPattern *pattern = createPattern(desc);
-  FcObjectSet *os = FcObjectSetBuild(FC_POSTSCRIPT_NAME, FC_FILE, NULL);
+  FcObjectSet *os = FcObjectSetBuild(FC_FILE, FC_POSTSCRIPT_NAME, FC_FAMILY, FC_STYLE, FC_WEIGHT, FC_WIDTH, FC_SLANT, FC_SPACING, NULL);
   FcFontSet *fs = FcFontList(NULL, pattern, os);
-
   ResultSet *res = getResultSet(fs);
 
   FcFontSetDestroy(fs);
@@ -128,22 +196,14 @@ ResultSet *findFonts(FontDescriptor *desc) {
   return res;
 }
 
-FontManagerResult *findFont(FontDescriptor *desc) {
+FontDescriptor *findFont(FontDescriptor *desc) {
   FcPattern *pattern = createPattern(desc);
   FcConfigSubstitute(NULL, pattern, FcMatchPattern);
   FcDefaultSubstitute(pattern);
 
   FcResult result;
   FcPattern *font = FcFontMatch(NULL, pattern, &result);
-
-  FcChar8 *file;
-  FcChar8 *psName;
-  FontManagerResult *res = NULL;
-
-  if (FcPatternGetString(font, FC_FILE, 0, &file) == FcResultMatch &&
-      FcPatternGetString(font, FC_POSTSCRIPT_NAME, 0, &psName) == FcResultMatch) {
-    res = new FontManagerResult((char *)file, (char *)psName);
-  }
+  FontDescriptor *res = createFontDescriptor(font);
 
   FcPatternDestroy(pattern);
   FcPatternDestroy(font);
@@ -151,7 +211,7 @@ FontManagerResult *findFont(FontDescriptor *desc) {
   return res;
 }
 
-FontManagerResult *substituteFont(char *postscriptName, char *string) {
+FontDescriptor *substituteFont(char *postscriptName, char *string) {
   FcInit();
 
   // create a pattern with the postscript name
@@ -177,16 +237,7 @@ FontManagerResult *substituteFont(char *postscriptName, char *string) {
   // find the best match font
   FcResult result;
   FcPattern *font = FcFontMatch(NULL, pattern, &result);
-
-  FcChar8 *file;
-  FcChar8 *psName;
-  FontManagerResult *res = NULL;
-
-  // create a result object if we found a match
-  if (FcPatternGetString(font, FC_FILE, 0, &file) == FcResultMatch &&
-      FcPatternGetString(font, FC_POSTSCRIPT_NAME, 0, &psName) == FcResultMatch) {
-    res = new FontManagerResult((char *)file, (char *)psName);
-  }
+  FontDescriptor *res = createFontDescriptor(font);
 
   FcPatternDestroy(pattern);
   FcPatternDestroy(font);
