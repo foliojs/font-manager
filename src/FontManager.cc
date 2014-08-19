@@ -3,15 +3,14 @@
 #include <uv.h>
 #include <v8.h>
 #include "FontDescriptor.h"
-#include "FontManagerResult.h"
 
 using namespace v8;
 
 // these functions are implemented by the platform
 ResultSet *getAvailableFonts();
 ResultSet *findFonts(FontDescriptor *);
-FontManagerResult *findFont(FontDescriptor *);
-FontManagerResult *substituteFont(char *, char *);
+FontDescriptor *findFont(FontDescriptor *);
+FontDescriptor *substituteFont(char *, char *);
 
 // converts a ResultSet to a JavaScript array
 Local<Array> collectResults(ResultSet *results) {
@@ -27,7 +26,7 @@ Local<Array> collectResults(ResultSet *results) {
 }
 
 // converts a FontManagerResult to a JavaScript object
-Local<Object> wrapResult(FontManagerResult *result) {
+Local<Object> wrapResult(FontDescriptor *result) {
   Local<Object> res = result->toJSObject();
   delete result;
   return res;
@@ -40,7 +39,7 @@ struct AsyncRequest {
   FontDescriptor *desc;           // used by findFont and findFonts
   char *postscriptName;           // used by substituteFont
   char *substitutionString;       // ditto
-  FontManagerResult *result;      // for functions with a single result
+  FontDescriptor *result;         // for functions with a single result
   ResultSet *results;             // for functions with multiple results
   Persistent<Function> callback;  // the actual JS callback to call when we are done
   
