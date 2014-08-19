@@ -1,29 +1,19 @@
 #include <Foundation/Foundation.h>
 #include <CoreText/CoreText.h>
 #include "FontDescriptor.h"
-#include "FontManagerResult.h"
-
-ResultSet *getAvailableFonts() {
-  NSArray *urls = (NSArray *) CTFontManagerCopyAvailableFontURLs();
-  ResultSet *results = new ResultSet();
-  
-  for (NSURL *url in urls) {
-    NSString *path = [url path];
-    NSString *psName = [[url fragment] stringByReplacingOccurrencesOfString:@"postscript-name=" withString:@""];
-    results->push_back(new FontManagerResult([path UTF8String], [psName UTF8String]));
-  }
-  
-  [urls release];
-  return results;
-}
+// #include "FontManagerResult.h"
 
 // converts a CoreText weight (-1 to +1) to a standard weight (100 to 900)
 static int convertWeight(float unit) {
+  int res;
   if (unit < 0) {
-    return 100 + (1 + unit) * 300;
+    res = 100 + (1 + unit) * 300;
   } else {
-    return 400 + unit * 500;
+    res = 400 + unit * 500;
   }
+  
+  // round to nearest 100
+  return (res + 50) / 100 * 100;
 }
 
 // converts a CoreText width (-1 to +1) to a standard width (1 to 9)
@@ -33,6 +23,57 @@ static int convertWidth(float unit) {
   } else {
     return 5 + unit * 4;
   }
+}
+
+FontDescriptor *createFontDescriptor(CTFontDescriptorRef descriptor) {
+  NSURL *url = (NSURL *) CTFontDescriptorCopyAttribute(descriptor, kCTFontURLAttribute);
+  NSString *psName = (NSString *) CTFontDescriptorCopyAttribute(descriptor, kCTFontNameAttribute);  
+  NSString *family = (NSString *) CTFontDescriptorCopyAttribute(descriptor, kCTFontFamilyNameAttribute);
+  NSString *style = (NSString *) CTFontDescriptorCopyAttribute(descriptor, kCTFontStyleNameAttribute);
+  
+  NSDictionary *traits = (NSDictionary *) CTFontDescriptorCopyAttribute(descriptor, kCTFontTraitsAttribute);
+  NSNumber *weightVal = traits[(id)kCTFontWeightTrait];
+  FontWeight weight = (FontWeight) convertWeight([weightVal floatValue]);
+  
+  NSNumber *widthVal = traits[(id)kCTFontWidthTrait];
+  FontWidth width = (FontWidth) convertWidth([widthVal floatValue]);
+  
+  NSNumber *symbolicTraitsVal = traits[(id)kCTFontSymbolicTrait];
+  unsigned int symbolicTraits = [symbolicTraitsVal unsignedIntValue];
+    
+  FontDescriptor *res = new FontDescriptor(
+    [[url path] UTF8String],
+    [psName UTF8String],
+    [family UTF8String],
+    [style UTF8String],
+    weight,
+    width,
+    (symbolicTraits & kCTFontItalicTrait) != 0,
+    (symbolicTraits & kCTFontMonoSpaceTrait) != 0
+  );
+    
+  [url release];
+  [psName release];
+  [family release];
+  [style release];
+  [traits release];
+  return res;
+}
+
+// TODO: this is SLOW
+ResultSet *getAvailableFonts() {
+  CTFontDescriptorRef descriptor = CTFontDescriptorCreateWithAttributes((CFDictionaryRef) @{});
+  NSArray *matches = (NSArray *) CTFontDescriptorCreateMatchingFontDescriptors(descriptor, NULL);
+  ResultSet *results = new ResultSet();
+  
+  for (id m in matches) {
+    CTFontDescriptorRef match = (CTFontDescriptorRef) m;
+    results->push_back(createFontDescriptor(match));
+  }
+  
+  CFRelease(descriptor);
+  [matches release];
+  return results;
 }
 
 // helper to square a value
@@ -120,11 +161,7 @@ ResultSet *findFonts(FontDescriptor *desc) {
     int mb = metricForMatch((CTFontDescriptorRef) m, desc);
     
     if (mb < 10000) {
-      NSURL *url = (NSURL *) CTFontDescriptorCopyAttribute(match, kCTFontURLAttribute);
-      NSString *ps = (NSString *) CTFontDescriptorCopyAttribute(match, kCTFontNameAttribute);
-      results->push_back(new FontManagerResult([[url path] UTF8String], [ps UTF8String]));
-      [url release];
-      [ps release];
+      results->push_back(createFontDescriptor(match));
     }
   }
   
@@ -133,8 +170,8 @@ ResultSet *findFonts(FontDescriptor *desc) {
   return results;
 }
 
-FontManagerResult *findFont(FontDescriptor *desc) {  
-  FontManagerResult *res = NULL;
+FontDescriptor *findFont(FontDescriptor *desc) {  
+  FontDescriptor *res = NULL;
   CTFontDescriptorRef descriptor = getFontDescriptor(desc);
   NSArray *matches = (NSArray *) CTFontDescriptorCreateMatchingFontDescriptors(descriptor, NULL);
   
@@ -157,21 +194,16 @@ FontManagerResult *findFont(FontDescriptor *desc) {
       
   // if we found a match, generate and return a URL for it
   if (best) {    
-    NSURL *url = (NSURL *) CTFontDescriptorCopyAttribute(best, kCTFontURLAttribute);
-    NSString *ps = (NSString *) CTFontDescriptorCopyAttribute(best, kCTFontNameAttribute);
-    res = new FontManagerResult([[url path] UTF8String], [ps UTF8String]);
-
-    [url release];
-    [ps release];
-    [matches release];
+    res = createFontDescriptor(best);
   }
   
+  [matches release];
   CFRelease(descriptor);
   return res;
 }
 
-FontManagerResult *substituteFont(char *postscriptName, char *string) {
-  FontManagerResult *res = NULL;
+FontDescriptor *substituteFont(char *postscriptName, char *string) {
+  FontDescriptor *res = NULL;
   
   // create a font descriptor to find the font by its postscript name
   // we don't use CTFontCreateWithName because that will return a best
@@ -192,15 +224,11 @@ FontManagerResult *substituteFont(char *postscriptName, char *string) {
     CTFontDescriptorRef substituteDescriptor = CTFontCopyFontDescriptor(substituteFont);
     
     // finally, create and return a result object for this substitute font
-    NSURL *url = (NSURL *) CTFontDescriptorCopyAttribute(substituteDescriptor, kCTFontURLAttribute);
-    NSString *psName = (NSString *) CTFontDescriptorCopyAttribute(substituteDescriptor, kCTFontNameAttribute);
-    res = new FontManagerResult([[url path] UTF8String], [psName UTF8String]);
+    res = createFontDescriptor(substituteDescriptor);
     
     CFRelease(font);
     CFRelease(substituteFont);
     CFRelease(substituteDescriptor);
-    [url release];
-    [psName release];
   }
   
   return res;
