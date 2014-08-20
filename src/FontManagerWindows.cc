@@ -1,6 +1,7 @@
 #define WINVER 0x0600
 #include "FontDescriptor.h"
 #include <dwrite.h>
+#include <dwrite_1.h>
 
 // throws a JS error when there is some exception in DirectWrite
 #define HR(hr) \
@@ -113,6 +114,10 @@ FontDescriptor *resultFromFont(IDWriteFont *font) {
       char *family = getString(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES);
       char *style = getString(font, DWRITE_INFORMATIONAL_STRING_WIN32_SUBFAMILY_NAMES);
 
+      // this method requires windows 7, so we need to cast to an IDWriteFontFace1
+      IDWriteFontFace1 *face1 = static_cast<IDWriteFontFace1 *>(face);
+      bool monospace = face1->IsMonospacedFont();
+
       res = new FontDescriptor(
         utf16ToUtf8(name),
         postscriptName,
@@ -121,7 +126,7 @@ FontDescriptor *resultFromFont(IDWriteFont *font) {
         (FontWeight) font->GetWeight(),
         (FontWidth) font->GetStretch(),
         font->GetStyle() == DWRITE_FONT_STYLE_ITALIC,
-        false // TODO!
+        monospace
       );
 
       delete name;
