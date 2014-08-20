@@ -17,6 +17,18 @@ describe('font-manager', function() {
     assert.equal(typeof fontManager.substituteFontSync, 'function');
   });
   
+  function assertFontDescriptor(font) {
+    assert.equal(typeof font, 'object');
+    assert.equal(typeof font.path, 'string');
+    assert.equal(typeof font.postscriptName, 'string');
+    assert.equal(typeof font.family, 'string');
+    assert.equal(typeof font.style, 'string');
+    assert.equal(typeof font.weight, 'number');
+    assert.equal(typeof font.width, 'number');
+    assert.equal(typeof font.italic, 'boolean');
+    assert.equal(typeof font.monospace, 'boolean');
+  }
+  
   describe('getAvailableFonts', function() {
     it('should throw if no callback is provided', function() {
       assert.throws(function() {
@@ -37,9 +49,7 @@ describe('font-manager', function() {
         assert(async); 
         assert(Array.isArray(fonts));
         assert(fonts.length > 0);
-        assert.equal(typeof fonts[0], 'object');
-        assert.equal(typeof fonts[0].path, 'string');
-        assert.equal(typeof fonts[0].postscriptName, 'string');
+        fonts.forEach(assertFontDescriptor);
         done();
       });
 
@@ -52,9 +62,7 @@ describe('font-manager', function() {
       var fonts = fontManager.getAvailableFontsSync();
       assert(Array.isArray(fonts));
       assert(fonts.length > 0);
-      assert.equal(typeof fonts[0], 'object');
-      assert.equal(typeof fonts[0].path, 'string');
-      assert.equal(typeof fonts[0].postscriptName, 'string');
+      fonts.forEach(assertFontDescriptor);
     });
   });
   
@@ -90,9 +98,7 @@ describe('font-manager', function() {
         assert(async); 
         assert(Array.isArray(fonts));
         assert(fonts.length > 0);
-        assert.equal(typeof fonts[0], 'object');
-        assert.equal(typeof fonts[0].path, 'string');
-        assert.equal(typeof fonts[0].postscriptName, 'string');
+        fonts.forEach(assertFontDescriptor);
         done();
       });
     
@@ -117,9 +123,7 @@ describe('font-manager', function() {
       var fonts = fontManager.findFontsSync({ family: standardFont });
       assert(Array.isArray(fonts));
       assert(fonts.length > 0);
-      assert.equal(typeof fonts[0], 'object');
-      assert.equal(typeof fonts[0].path, 'string');
-      assert.equal(typeof fonts[0].postscriptName, 'string');
+      fonts.forEach(assertFontDescriptor);
     });
   });
   
@@ -155,8 +159,7 @@ describe('font-manager', function() {
         assert(async); 
         assert.equal(typeof font, 'object');
         assert(!Array.isArray(font));
-        assert.equal(typeof font.path, 'string');
-        assert.equal(typeof font.postscriptName, 'string');
+        assertFontDescriptor(font);
         done();
       });
     
@@ -181,8 +184,7 @@ describe('font-manager', function() {
       var font = fontManager.findFontSync({ family: standardFont });
       assert.equal(typeof font, 'object');
       assert(!Array.isArray(font));
-      assert.equal(typeof font.path, 'string');
-      assert.equal(typeof font.postscriptName, 'string');
+      assertFontDescriptor(font);
     });
   });
   
@@ -230,8 +232,7 @@ describe('font-manager', function() {
         assert(async); 
         assert.equal(typeof font, 'object');
         assert(!Array.isArray(font));
-        assert.equal(typeof font.path, 'string');
-        assert.equal(typeof font.postscriptName, 'string');
+        assertFontDescriptor(font);
         assert.notEqual(font.postscriptName, postscriptName);
         done();
       });
@@ -269,8 +270,7 @@ describe('font-manager', function() {
       var font = fontManager.substituteFontSync(postscriptName, '汉字');
       assert.equal(typeof font, 'object');
       assert(!Array.isArray(font));
-      assert.equal(typeof font.path, 'string');
-      assert.equal(typeof font.postscriptName, 'string');
+      assertFontDescriptor(font);
       assert.notEqual(font.postscriptName, postscriptName);
     });
   });
