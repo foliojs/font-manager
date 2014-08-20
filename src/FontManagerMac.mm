@@ -4,16 +4,25 @@
 // #include "FontManagerResult.h"
 
 // converts a CoreText weight (-1 to +1) to a standard weight (100 to 900)
-static int convertWeight(float unit) {
-  int res;
-  if (unit < 0) {
-    res = 100 + (1 + unit) * 300;
-  } else {
-    res = 400 + unit * 500;
-  }
-  
-  // round to nearest 100
-  return (res + 50) / 100 * 100;
+static int convertWeight(float weight) {
+  if (weight <= -0.8f)
+    return 100;
+  else if (weight <= -0.6f)
+    return 200;
+  else if (weight <= -0.4f)
+    return 300;
+  else if (weight <= 0.0f)
+    return 400;
+  else if (weight <= 0.25f)
+    return 500;
+  else if (weight <= 0.35f)
+    return 600;
+  else if (weight <= 0.4f)
+    return 700;
+  else if (weight <= 0.6f)
+    return 800;
+  else
+    return 900;
 }
 
 // converts a CoreText width (-1 to +1) to a standard width (1 to 9)
