@@ -60,10 +60,13 @@ FontDescriptor *createFontDescriptor(CTFontDescriptorRef descriptor) {
   return res;
 }
 
-// TODO: this is SLOW
 ResultSet *getAvailableFonts() {
-  CTFontDescriptorRef descriptor = CTFontDescriptorCreateWithAttributes((CFDictionaryRef) @{});
-  NSArray *matches = (NSArray *) CTFontDescriptorCreateMatchingFontDescriptors(descriptor, NULL);
+  // cache font collection for fast use in future calls
+  static CTFontCollectionRef collection = NULL;
+  if (collection == NULL)
+    collection = CTFontCollectionCreateFromAvailableFonts(NULL);
+  
+  NSArray *matches = (NSArray *) CTFontCollectionCreateMatchingFontDescriptors(collection);  
   ResultSet *results = new ResultSet();
   
   for (id m in matches) {
@@ -71,7 +74,6 @@ ResultSet *getAvailableFonts() {
     results->push_back(createFontDescriptor(match));
   }
   
-  CFRelease(descriptor);
   [matches release];
   return results;
 }
