@@ -1,50 +1,85 @@
+#define WINVER 0x0600
 #include "FontDescriptor.h"
-#include "FontManagerResult.h"
 #include <dwrite.h>
 
 // throws a JS error when there is some exception in DirectWrite
 #define HR(hr) \
   if (FAILED(hr)) throw "Font loading error";
 
-WCHAR *utf8ToUtf16(char *input) {
+WCHAR *utf8ToUtf16(const char *input) {
   unsigned int len = MultiByteToWideChar(CP_UTF8, 0, input, -1, NULL, 0);
   WCHAR *output = new WCHAR[len];
   MultiByteToWideChar(CP_UTF8, 0, input, -1, output, len);
   return output;
 }
 
-char *utf16ToUtf8(WCHAR *input) {
+char *utf16ToUtf8(const WCHAR *input) {
   unsigned int len = WideCharToMultiByte(CP_UTF8, 0, input, -1, NULL, 0, NULL, NULL);
   char *output = new char[len];
   WideCharToMultiByte(CP_UTF8, 0, input, -1, output, len, NULL, NULL);
   return output;
 }
 
-// gets the postscript name for a font
-WCHAR *getPostscriptName(IDWriteFont *font) {
+// returns the index of the user's locale in the set of localized strings
+unsigned int getLocaleIndex(IDWriteLocalizedStrings *strings) {
+  unsigned int index = 0;
+  BOOL exists = false;
+  wchar_t localeName[LOCALE_NAME_MAX_LENGTH];
+
+  // Get the default locale for this user.
+  int success = GetUserDefaultLocaleName(localeName, LOCALE_NAME_MAX_LENGTH);
+
+  // If the default locale is returned, find that locale name, otherwise use "en-us".
+  if (success) {
+    HR(strings->FindLocaleName(localeName, &index, &exists));
+  }
+
+  // if the above find did not find a match, retry with US English
+  if (!exists) {
+    HR(strings->FindLocaleName(L"en-us", &index, &exists));
+  }
+
+  if (!exists)
+    index = 0;
+
+  return index;
+}
+
+// gets a localized string for a font
+char *getString(IDWriteFont *font, DWRITE_INFORMATIONAL_STRING_ID string_id) {
   IDWriteLocalizedStrings *strings = NULL;
-  unsigned int psNameLength = 0;
-  WCHAR *psName = NULL;
 
   BOOL exists = false;
   HR(font->GetInformationalStrings(
-    DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_NAME,
+    string_id,
     &strings,
     &exists
   ));
 
-  HR(strings->GetStringLength(0, &psNameLength));
-  psName = new WCHAR[psNameLength + 1];
+  unsigned int index = getLocaleIndex(strings);
 
-  HR(strings->GetString(0, psName, psNameLength + 1));
-  return psName;
+  if (exists) {
+    unsigned int len = 0;
+    WCHAR *str = NULL;
+
+    HR(strings->GetStringLength(index, &len));
+    str = new WCHAR[len + 1];
+
+    HR(strings->GetString(index, str, len + 1));
+
+    // convert to utf8
+    char *res = utf16ToUtf8(str);
+    delete str;
+    return res;
+  }
+
+  return "";
 }
 
-FontManagerResult *resultFromFont(IDWriteFont *font) {
-  FontManagerResult *res = NULL;
+FontDescriptor *resultFromFont(IDWriteFont *font) {
+  FontDescriptor *res = NULL;
   IDWriteFontFace *face = NULL;
   unsigned int numFiles = 0;
-  WCHAR *psName = getPostscriptName(font);
 
   HR(font->CreateFontFace(&face));
 
@@ -74,12 +109,28 @@ FontManagerResult *resultFromFont(IDWriteFont *font) {
       name = new WCHAR[nameLength + 1];
       HR(fileLoader->GetFilePathFromKey(referenceKey, referenceKeySize, name, nameLength + 1));
 
-      res = new FontManagerResult(utf16ToUtf8(name), utf16ToUtf8(psName));
+      char *postscriptName = getString(font, DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_NAME);
+      char *family = getString(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES);
+      char *style = getString(font, DWRITE_INFORMATIONAL_STRING_WIN32_SUBFAMILY_NAMES);
+
+      res = new FontDescriptor(
+        utf16ToUtf8(name),
+        postscriptName,
+        family,
+        style,
+        (FontWeight) font->GetWeight(),
+        (FontWidth) font->GetStretch(),
+        font->GetStyle() == DWRITE_FONT_STYLE_ITALIC,
+        false // TODO!
+      );
+
       delete name;
+      delete postscriptName;
+      delete family;
+      delete style;
     }
   }
 
-  delete psName;
   return res;
 }
 
@@ -146,8 +197,6 @@ IDWriteFontList *findFontsByFamily(IDWriteFontCollection *collection, FontDescri
 }
 
 IDWriteFont *findFontByPostscriptName(IDWriteFontCollection *collection, FontDescriptor *desc) {
-  WCHAR *postscriptName = utf8ToUtf16(desc->postscriptName);
-
   // Get the number of font families in the collection.
   int familyCount = collection->GetFontFamilyCount();
 
@@ -163,9 +212,8 @@ IDWriteFont *findFontByPostscriptName(IDWriteFontCollection *collection, FontDes
       IDWriteFont *font = NULL;
       HR(family->GetFont(j, &font));
 
-      WCHAR *psName = getPostscriptName(font);
-      if (wcscmp(psName, postscriptName) == 0) {
-        delete postscriptName;
+      char *psName = getString(font, DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_NAME);
+      if (strcmp(psName, desc->postscriptName) == 0) {
         delete psName;
         return font;
       }
@@ -174,10 +222,10 @@ IDWriteFont *findFontByPostscriptName(IDWriteFontCollection *collection, FontDes
     }
   }
 
-  delete postscriptName;
   return NULL;
 }
 
+// TODO: style, monospace
 ResultSet *findFonts(FontDescriptor *desc) {
   ResultSet *res = new ResultSet();
   
@@ -212,7 +260,7 @@ ResultSet *findFonts(FontDescriptor *desc) {
   return res;
 }
 
-FontManagerResult *findFont(FontDescriptor *desc) {
+FontDescriptor *findFont(FontDescriptor *desc) {
   IDWriteFactory *factory = NULL;
   HR(DWriteCreateFactory(
     DWRITE_FACTORY_TYPE_SHARED,
@@ -356,8 +404,8 @@ public:
   }
 };
 
-FontManagerResult *substituteFont(char *postscriptName, char *string) {
-  FontManagerResult *res = NULL;
+FontDescriptor *substituteFont(char *postscriptName, char *string) {
+  FontDescriptor *res = NULL;
 
   IDWriteFactory *factory = NULL;
   HR(DWriteCreateFactory(
