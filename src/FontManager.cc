@@ -26,7 +26,10 @@ Local<Array> collectResults(ResultSet *results) {
 }
 
 // converts a FontManagerResult to a JavaScript object
-Local<Object> wrapResult(FontDescriptor *result) {
+Handle<Value> wrapResult(FontDescriptor *result) {
+  if (result == NULL)
+    return Null();
+  
   Local<Object> res = result->toJSObject();
   delete result;
   return res;
@@ -174,7 +177,7 @@ Handle<Value> findFont(const Arguments& args) {
     
     return scope.Close(Undefined());
   } else {
-    Local<Object> res = wrapResult(findFont(descriptor));
+    Handle<Value> res = wrapResult(findFont(descriptor));
     delete descriptor;
     return scope.Close(res);
   }
