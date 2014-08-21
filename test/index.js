@@ -2,8 +2,8 @@ var fontManager = require('../');
 var assert = require('assert');
 
 // some standard fonts that are likely to be installed on the platform the tests are running on
-var standardFont = process.platform === 'linux' ? 'DejaVu Sans' : 'Arial';
-var postscriptName = process.platform === 'linux' ? 'DejaVuSans' : 'ArialMT';
+var standardFont = process.platform === 'linux' ? 'Liberation Sans' : 'Arial';
+var postscriptName = process.platform === 'linux' ? 'LiberationSans' : 'ArialMT';
 
 describe('font-manager', function() {
   it('should export some functions', function() {
