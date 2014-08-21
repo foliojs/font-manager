@@ -49,6 +49,7 @@ unsigned int getLocaleIndex(IDWriteLocalizedStrings *strings) {
 
 // gets a localized string for a font
 char *getString(IDWriteFont *font, DWRITE_INFORMATIONAL_STRING_ID string_id) {
+  char *res = "";
   IDWriteLocalizedStrings *strings = NULL;
 
   BOOL exists = false;
@@ -70,12 +71,12 @@ char *getString(IDWriteFont *font, DWRITE_INFORMATIONAL_STRING_ID string_id) {
     HR(strings->GetString(index, str, len + 1));
 
     // convert to utf8
-    char *res = utf16ToUtf8(str);
+    res = utf16ToUtf8(str);
     delete str;
-    return res;
   }
 
-  return "";
+  strings->Release();
+  return res;
 }
 
 FontDescriptor *resultFromFont(IDWriteFont *font) {
@@ -134,8 +135,14 @@ FontDescriptor *resultFromFont(IDWriteFont *font) {
       delete postscriptName;
       delete family;
       delete style;
+      fileLoader->Release();
     }
+
+    loader->Release();
   }
+
+  face->Release();
+  files->Release();
 
   return res;
 }
@@ -164,11 +171,10 @@ ResultSet *getAvailableFonts() {
 
   for (int i = 0; i < familyCount; i++) {
     IDWriteFontFamily *family = NULL;
-    int fontCount = 0;
 
     // Get the font family.
     HR(collection->GetFontFamily(i, &family));
-    fontCount = family->GetFontCount();
+    int fontCount = family->GetFontCount();
 
     for (int j = 0; j < fontCount; j++) {
       IDWriteFont *font = NULL;
@@ -180,7 +186,12 @@ ResultSet *getAvailableFonts() {
         psNames.insert(result->postscriptName);
       }
     }
+
+    family->Release();
   }
+
+  collection->Release();
+  factory->Release();
 
   return res;
 }
