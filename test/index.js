@@ -133,7 +133,9 @@ describe('font-manager', function() {
         assert(Array.isArray(fonts));
         assert(fonts.length > 0);
         fonts.forEach(assertFontDescriptor);
-        assert.equal(fonts[0].weight, 700);
+        fonts.forEach(function(font) {
+          assert.equal(font.weight, 700);
+        });
         done();
       });
     });
@@ -143,7 +145,9 @@ describe('font-manager', function() {
         assert(Array.isArray(fonts));
         assert(fonts.length > 0);
         fonts.forEach(assertFontDescriptor);
-        assert.equal(fonts[0].italic, true);
+        fonts.forEach(function(font) {
+          assert.equal(font.italic, true);
+        });
         done();
       });
     });
@@ -153,8 +157,10 @@ describe('font-manager', function() {
         assert(Array.isArray(fonts));
         assert(fonts.length > 0);
         fonts.forEach(assertFontDescriptor);
-        assert.equal(fonts[0].italic, true);
-        assert.equal(fonts[0].weight, 700);
+        fonts.forEach(function(font) {
+          assert.equal(font.italic, true);
+          assert.equal(font.weight, 700);
+        });
         done();
       });
     });
