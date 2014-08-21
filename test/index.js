@@ -521,7 +521,7 @@ describe('font-manager', function() {
     
     it('should return null if no font exists for the given postscriptName', function(done) {
       fontManager.substituteFont('' + Date.now(), '汉字', function(font) {
-        assert.equal(font, null);
+        assertFontDescriptor(font);
         done();
       });
     });
@@ -552,7 +552,7 @@ describe('font-manager', function() {
       }, /Expected substitution string/);
     });
     
-    it('should substituteFont asynchronously', function() {
+    it('should substituteFont synchronously', function() {
       var font = fontManager.substituteFontSync(postscriptName, '汉字');
       assert.equal(typeof font, 'object');
       assert(!Array.isArray(font));
@@ -566,9 +566,9 @@ describe('font-manager', function() {
       assert.equal(font.postscriptName, postscriptName);
     });
     
-    it('should return null if no font exists for the given postscriptName', function() {
+    it('should return a default font if no font exists for the given postscriptName', function() {
       var font = fontManager.substituteFontSync('' + Date.now(), '汉字');
-      assert.equal(font, null);
+      assertFontDescriptor(font);
     });
   });
 });
