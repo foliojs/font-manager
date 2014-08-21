@@ -231,30 +231,24 @@ FontDescriptor *substituteFont(char *postscriptName, char *string) {
   FontDescriptor *res = NULL;
   
   // create a font descriptor to find the font by its postscript name
-  // we don't use CTFontCreateWithName because that will return a best
-  // match even if the font doesn't actually exist.
+  // we don't use CTFontCreateWithName because that supports font
+  // names other than the postscript name but prints warnings.
   NSString *ps = [NSString stringWithUTF8String:postscriptName];
   NSDictionary *attrs = @{(id)kCTFontNameAttribute: ps};
   CTFontDescriptorRef descriptor = CTFontDescriptorCreateWithAttributes((CFDictionaryRef) attrs);
+  CTFontRef font = CTFontCreateWithFontDescriptor(descriptor, 12.0, NULL);
   
-  // find a match
-  CTFontDescriptorRef match = CTFontDescriptorCreateMatchingFontDescriptor(descriptor, NULL);
-  CFRelease(descriptor);
+  // find a substitute font that support the given characters
+  NSString *str = [NSString stringWithUTF8String:string];
+  CTFontRef substituteFont = CTFontCreateForString(font, (CFStringRef) str, CFRangeMake(0, [str length]));
+  CTFontDescriptorRef substituteDescriptor = CTFontCopyFontDescriptor(substituteFont);
   
-  if (match) {
-    // copy the font descriptor for this match and create a substitute font matching the given string
-    CTFontRef font = CTFontCreateWithFontDescriptor(match, 12.0, NULL);
-    NSString *str = [NSString stringWithUTF8String:string];
-    CTFontRef substituteFont = CTFontCreateForString(font, (CFStringRef) str, CFRangeMake(0, [str length]));
-    CTFontDescriptorRef substituteDescriptor = CTFontCopyFontDescriptor(substituteFont);
-    
-    // finally, create and return a result object for this substitute font
-    res = createFontDescriptor(substituteDescriptor);
-    
-    CFRelease(font);
-    CFRelease(substituteFont);
-    CFRelease(substituteDescriptor);
-  }
+  // finally, create and return a result object for this substitute font
+  res = createFontDescriptor(substituteDescriptor);
+  
+  CFRelease(font);
+  CFRelease(substituteFont);
+  CFRelease(substituteDescriptor);
   
   return res;
 }
