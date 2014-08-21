@@ -25,7 +25,7 @@ Local<Array> collectResults(ResultSet *results) {
   return res;
 }
 
-// converts a FontManagerResult to a JavaScript object
+// converts a FontDescriptor to a JavaScript object
 Handle<Value> wrapResult(FontDescriptor *result) {
   if (result == NULL)
     return Null();
