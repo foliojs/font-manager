@@ -26,7 +26,7 @@ the platform APIs that are available.
 * [`findFont(fontDescriptor)`](#findfontfontdescriptor)
 * [`substituteFont(postscriptName, text)`](#substitutefontpostscriptnametext)
 
-### `getAvailableFonts()`
+### getAvailableFonts()
 
 Returns an array of all font descriptors available on the system.
 
@@ -49,7 +49,7 @@ var fonts = fontManager.getAvailableFontsSync();
   ... ]
 ```
 
-### `findFonts(fontDescriptor)`
+### findFonts(fontDescriptor)
 
 Returns an array of [font descriptors](#font-descriptor) matching a query 
 [font descriptor](#font-descriptor). 
@@ -81,7 +81,7 @@ var fonts = fontManager.findFontsSync({ family: 'Arial' });
     monospace: false } ]
 ```
 
-### `findFont(fontDescriptor)`
+### findFont(fontDescriptor)
 
 Returns a single [font descriptors](#font-descriptor) matching a query
 [font descriptors](#font-descriptor) as well as possible. This method
@@ -107,7 +107,7 @@ var font = fontManager.findFontSync({ family: 'Arial', weight: 700 });
   monospace: false }
 ```
 
-### `substituteFont(postscriptName, text)`
+### substituteFont(postscriptName, text)
 
 Substitutes the font with the given `postscriptName` with another font
 that contains the characters in `text`.  If a font matching `postscriptName`
