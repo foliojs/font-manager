@@ -119,7 +119,7 @@ FontDescriptor *resultFromFont(IDWriteFont *font) {
 
       // this method requires windows 7, so we need to cast to an IDWriteFontFace1
       IDWriteFontFace1 *face1 = static_cast<IDWriteFontFace1 *>(face);
-      bool monospace = face1->IsMonospacedFont();
+      bool monospace = face1->IsMonospacedFont() == TRUE;
 
       res = new FontDescriptor(
         psName,
