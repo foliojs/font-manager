@@ -104,6 +104,85 @@ describe('font-manager', function() {
     
       async = true;
     });
+    
+    it('should find fonts by postscriptName', function(done) {
+      fontManager.findFonts({ postscriptName: postscriptName }, function(fonts) {
+        assert(Array.isArray(fonts));
+        assert.equal(fonts.length, 1);
+        fonts.forEach(assertFontDescriptor);
+        assert.equal(fonts[0].postscriptName, postscriptName);
+        assert.equal(fonts[0].family, standardFont);
+        done();
+      });
+    });
+    
+    it('should find fonts by family and style', function(done) {
+      fontManager.findFonts({ family: standardFont, style: 'Bold' }, function(fonts) {
+        assert(Array.isArray(fonts));
+        assert.equal(fonts.length, 1);
+        fonts.forEach(assertFontDescriptor);
+        assert.equal(fonts[0].family, standardFont);
+        assert.equal(fonts[0].style, 'Bold');
+        assert.equal(fonts[0].weight, 700);
+        done();
+      });
+    });
+    
+    it('should find fonts by weight', function(done) {
+      fontManager.findFonts({ family: standardFont, weight: 700 }, function(fonts) {
+        assert(Array.isArray(fonts));
+        assert(fonts.length > 0);
+        fonts.forEach(assertFontDescriptor);
+        assert.equal(fonts[0].weight, 700);
+        done();
+      });
+    });
+    
+    it('should find italic fonts', function(done) {
+      fontManager.findFonts({ family: standardFont, italic: true }, function(fonts) {
+        assert(Array.isArray(fonts));
+        assert(fonts.length > 0);
+        fonts.forEach(assertFontDescriptor);
+        assert.equal(fonts[0].italic, true);
+        done();
+      });
+    });
+    
+    it('should find italic and bold fonts', function(done) {
+      fontManager.findFonts({ family: standardFont, italic: true, weight: 700 }, function(fonts) {
+        assert(Array.isArray(fonts));
+        assert(fonts.length > 0);
+        fonts.forEach(assertFontDescriptor);
+        assert.equal(fonts[0].italic, true);
+        assert.equal(fonts[0].weight, 700);
+        done();
+      });
+    });
+    
+    it('should return an empty array for nonexistent family', function(done) {
+      fontManager.findFonts({ family: '' + Date.now() }, function(fonts) {
+        assert(Array.isArray(fonts));
+        assert.equal(fonts.length, 0);
+        done();
+      });
+    });
+    
+    it('should return an empty array for nonexistent postscriptName', function(done) {
+      fontManager.findFonts({ postscriptName: '' + Date.now() }, function(fonts) {
+        assert(Array.isArray(fonts));
+        assert.equal(fonts.length, 0);
+        done();
+      });
+    });
+    
+    it('should return many fonts for empty font descriptor', function(done) {
+      fontManager.findFonts({}, function(fonts) {
+        assert(Array.isArray(fonts));
+        assert(fonts.length > 0);
+        fonts.forEach(assertFontDescriptor);
+        done();
+      });
+    });
   });
   
   describe('findFontsSync', function() {
@@ -121,6 +200,69 @@ describe('font-manager', function() {
     
     it('should findFonts synchronously', function() {
       var fonts = fontManager.findFontsSync({ family: standardFont });
+      assert(Array.isArray(fonts));
+      assert(fonts.length > 0);
+      fonts.forEach(assertFontDescriptor);
+    });
+    
+    it('should find fonts by postscriptName', function() {
+      var fonts = fontManager.findFontsSync({ postscriptName: postscriptName });
+      assert(Array.isArray(fonts));
+      assert.equal(fonts.length, 1);
+      fonts.forEach(assertFontDescriptor);
+      assert.equal(fonts[0].postscriptName, postscriptName);
+      assert.equal(fonts[0].family, standardFont);
+    });
+    
+    it('should find fonts by family and style', function() {
+      var fonts = fontManager.findFontsSync({ family: standardFont, style: 'Bold' });
+      assert(Array.isArray(fonts));
+      assert.equal(fonts.length, 1);
+      fonts.forEach(assertFontDescriptor);
+      assert.equal(fonts[0].family, standardFont);
+      assert.equal(fonts[0].style, 'Bold');
+      assert.equal(fonts[0].weight, 700);
+    });
+    
+    it('should find fonts by weight', function() {
+      var fonts = fontManager.findFontsSync({ family: standardFont, weight: 700 });
+      assert(Array.isArray(fonts));
+      assert(fonts.length > 0);
+      fonts.forEach(assertFontDescriptor);
+      assert.equal(fonts[0].weight, 700);
+    });
+    
+    it('should find italic fonts', function() {
+      var fonts = fontManager.findFontsSync({ family: standardFont, italic: true });
+      assert(Array.isArray(fonts));
+      assert(fonts.length > 0);
+      fonts.forEach(assertFontDescriptor);
+      assert.equal(fonts[0].italic, true);
+    });
+    
+    it('should find italic and bold fonts', function() {
+      var fonts = fontManager.findFontsSync({ family: standardFont, italic: true, weight: 700 });
+      assert(Array.isArray(fonts));
+      assert(fonts.length > 0);
+      fonts.forEach(assertFontDescriptor);
+      assert.equal(fonts[0].italic, true);
+      assert.equal(fonts[0].weight, 700);
+    });
+    
+    it('should return an empty array for nonexistent family', function() {
+      var fonts = fontManager.findFontsSync({ family: '' + Date.now() });
+      assert(Array.isArray(fonts));
+      assert.equal(fonts.length, 0);
+    });
+    
+    it('should return an empty array for nonexistent postscriptName', function() {
+      var fonts = fontManager.findFontsSync({ postscriptName: '' + Date.now() });
+      assert(Array.isArray(fonts));
+      assert.equal(fonts.length, 0);
+    });
+    
+    it('should return many fonts for empty font descriptor', function() {
+      var fonts = fontManager.findFontsSync({});
       assert(Array.isArray(fonts));
       assert(fonts.length > 0);
       fonts.forEach(assertFontDescriptor);
@@ -160,10 +302,76 @@ describe('font-manager', function() {
         assert.equal(typeof font, 'object');
         assert(!Array.isArray(font));
         assertFontDescriptor(font);
+        assert.equal(font.family, standardFont);
         done();
       });
     
       async = true;
+    });
+    
+    it('should find font by postscriptName', function(done) {
+      fontManager.findFont({ postscriptName: postscriptName }, function(font) {
+        assertFontDescriptor(font);
+        assert.equal(font.postscriptName, postscriptName);
+        assert.equal(font.family, standardFont);
+        done();
+      });
+    });
+    
+    it('should find font by family and style', function(done) {
+      fontManager.findFont({ family: standardFont, style: 'Bold' }, function(font) {
+        assertFontDescriptor(font);
+        assert.equal(font.family, standardFont);
+        assert.equal(font.style, 'Bold');
+        assert.equal(font.weight, 700);
+        done();
+      });
+    });
+    
+    it('should find font by weight', function(done) {
+      fontManager.findFont({ family: standardFont, weight: 700 }, function(font) {
+        assertFontDescriptor(font);
+        assert.equal(font.weight, 700);
+        done();
+      });
+    });
+    
+    it('should find italic font', function(done) {
+      fontManager.findFont({ family: standardFont, italic: true }, function(font) {
+        assertFontDescriptor(font);
+        assert.equal(font.italic, true);
+        done();
+      });
+    });
+    
+    it('should find bold italic font', function(done) {
+      fontManager.findFont({ family: standardFont, italic: true, weight: 700 }, function(font) {
+        assertFontDescriptor(font);
+        assert.equal(font.italic, true);
+        assert.equal(font.weight, 700);
+        done();
+      });
+    });
+    
+    it('should return null for nonexistent family', function(done) {
+      fontManager.findFont({ family: '' + Date.now() }, function(font) {
+        assert.equal(font, null);
+        done();
+      });
+    });
+    
+    it('should return null for nonexistent postscriptName', function(done) {
+      fontManager.findFont({ postscriptName: '' + Date.now() }, function(font) {
+        assert.equal(font, null);
+        done();
+      });
+    });
+    
+    it('should return a font for empty font descriptor', function(done) {
+      fontManager.findFont({}, function(font) {
+        assertFontDescriptor(font);
+        done();
+      });
     });
   });
   
@@ -184,6 +392,55 @@ describe('font-manager', function() {
       var font = fontManager.findFontSync({ family: standardFont });
       assert.equal(typeof font, 'object');
       assert(!Array.isArray(font));
+      assertFontDescriptor(font);
+    });
+    
+    it('should find font by postscriptName', function() {
+      var font = fontManager.findFontSync({ postscriptName: postscriptName });
+      assertFontDescriptor(font);
+      assert.equal(font.postscriptName, postscriptName);
+      assert.equal(font.family, standardFont);
+    });
+    
+    it('should find font by family and style', function() {
+      var font = fontManager.findFontSync({ family: standardFont, style: 'Bold' });
+      assertFontDescriptor(font);
+      assert.equal(font.family, standardFont);
+      assert.equal(font.style, 'Bold');
+      assert.equal(font.weight, 700);
+    });
+    
+    it('should find font by weight', function() {
+      var font = fontManager.findFontSync({ family: standardFont, weight: 700 });
+      assertFontDescriptor(font);
+      assert.equal(font.weight, 700);
+    });
+    
+    it('should find italic font', function() {
+      var font = fontManager.findFontSync({ family: standardFont, italic: true });
+      assertFontDescriptor(font);
+      assert.equal(font.italic, true);
+    });
+    
+    it('should find bold italic font', function() {
+      var font = fontManager.findFontSync({ family: standardFont, italic: true, weight: 700 });
+      assertFontDescriptor(font);
+      assert.equal(font.italic, true);
+      assert.equal(font.weight, 700);
+    });
+    
+    it('should return null for nonexistent family', function() {
+      var font = fontManager.findFontSync({ family: '' + Date.now() });
+      assert.equal(font, null);
+    });
+    
+    it('should return null for nonexistent postscriptName', function() {
+      var font = fontManager.findFontSync({ postscriptName: '' + Date.now() });
+      assert.equal(font, null);
+    });
+    
+    it('should return a font for empty font descriptor', function() {
+      var font = fontManager.findFontSync({});
       assertFontDescriptor(font);
     });
   });
@@ -239,6 +496,21 @@ describe('font-manager', function() {
     
       async = true;
     });
+    
+    it('should return the same font if it already contains the requested characters', function(done) {
+      fontManager.substituteFont(postscriptName, 'hi', function(font) {
+        assertFontDescriptor(font);
+        assert.equal(font.postscriptName, postscriptName);
+        done();
+      });
+    });
+    
+    it('should return null if no font exists for the given postscriptName', function(done) {
+      fontManager.substituteFont('' + Date.now(), '汉字', function(font) {
+        assert.equal(font, null);
+        done();
+      });
+    });
   });
   
   describe('substituteFontSync', function() {
@@ -272,6 +544,17 @@ describe('font-manager', function() {
       assert(!Array.isArray(font));
       assertFontDescriptor(font);
       assert.notEqual(font.postscriptName, postscriptName);
+    });
+    
+    it('should return the same font if it already contains the requested characters', function() {
+      var font = fontManager.substituteFontSync(postscriptName, 'hi');
+      assertFontDescriptor(font);
+      assert.equal(font.postscriptName, postscriptName);
+    });
+    
+    it('should return null if no font exists for the given postscriptName', function() {
+      var font = fontManager.substituteFontSync('' + Date.now(), '汉字');
+      assert.equal(font, null);
     });
   });
 });
