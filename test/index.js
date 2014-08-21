@@ -353,23 +353,26 @@ describe('font-manager', function() {
       });
     });
     
-    it('should return a fallback font for nonexistent family', function() {
+    it('should return a fallback font for nonexistent family', function(done) {
       fontManager.findFont({ family: '' + Date.now() }, function(font) {
         assertFontDescriptor(font);
+        done();
       });
     });
     
-    it('should return a fallback font for nonexistent postscriptName', function() {
+    it('should return a fallback font for nonexistent postscriptName', function(done) {
       fontManager.findFont({ postscriptName: '' + Date.now() }, function(font) {
         assertFontDescriptor(font);
+        done();
       });
     });
     
-    it('should return a fallback font matching traits as best as possible', function() {
+    it('should return a fallback font matching traits as best as possible', function(done) {
       fontManager.findFont({ family: '' + Date.now(), italic: true, weight: 700 }, function(font) {
         assertFontDescriptor(font);
         assert.equal(font.italic, true);
         assert.equal(font.weight, 700);
+        done();
       });
     });
     
