@@ -368,9 +368,8 @@ describe('font-manager', function() {
     });
     
     it('should return a fallback font matching traits as best as possible', function(done) {
-      fontManager.findFont({ family: '' + Date.now(), italic: true, weight: 700 }, function(font) {
+      fontManager.findFont({ family: '' + Date.now(), weight: 700 }, function(font) {
         assertFontDescriptor(font);
-        assert.equal(font.italic, true);
         assert.equal(font.weight, 700);
         done();
       });
@@ -449,9 +448,8 @@ describe('font-manager', function() {
     });
     
     it('should return a fallback font matching traits as best as possible', function() {
-      var font = fontManager.findFontSync({ family: '' + Date.now(), italic: true, weight: 700 });
+      var font = fontManager.findFontSync({ family: '' + Date.now(), weight: 700 });
       assertFontDescriptor(font);
-      assert.equal(font.italic, true);
       assert.equal(font.weight, 700);
     });
     
