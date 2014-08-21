@@ -2,6 +2,7 @@
 #include "FontDescriptor.h"
 #include <dwrite.h>
 #include <dwrite_1.h>
+#include <unordered_set>
 
 // throws a JS error when there is some exception in DirectWrite
 #define HR(hr) \
@@ -157,6 +158,10 @@ ResultSet *getAvailableFonts() {
   // Get the number of font families in the collection.
   int familyCount = collection->GetFontFamilyCount();
 
+  // track postscript names we've already added
+  // using a set so we don't get any duplicates.
+  std::unordered_set<std::string> psNames;
+
   for (int i = 0; i < familyCount; i++) {
     IDWriteFontFamily *family = NULL;
     int fontCount = 0;
@@ -168,7 +173,12 @@ ResultSet *getAvailableFonts() {
     for (int j = 0; j < fontCount; j++) {
       IDWriteFont *font = NULL;
       HR(family->GetFont(j, &font));
-      res->push_back(resultFromFont(font));
+
+      FontDescriptor *result = resultFromFont(font);
+      if (psNames.count(result->postscriptName) == 0) {
+        res->push_back(resultFromFont(font));
+        psNames.insert(result->postscriptName);
+      }
     }
   }
 
