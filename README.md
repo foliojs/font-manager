@@ -14,7 +14,23 @@ A C++ module for Node.js providing access to the system font catalog.
 * Windows 7 and later supported via [DirectWrite](http://msdn.microsoft.com/en-us/library/windows/desktop/dd368038(v=vs.85).aspx)
 * Linux supported via [fontconfig](http://www.freedesktop.org/software/fontconfig)
 
+## Installation
+
+Installation of the `font-manager` module is via npm:
+
+    npm install font-manager
+
+On Linux, you also may need to install the `libfontconfig-dev` package, for example:
+
+    sudo apt-get install libfontconfig-dev
+
 ## API
+
+You load the `font-manager` module using `require` as with all Node modules:
+
+```javascript
+var fontManager = require('font-manager');
+```
 
 All of the methods exported by `font-manager` have both synchronous and asynchronous versions available.
 You should generally prefer the asynchronous version as it will allow your program to continue doing other
@@ -24,7 +40,7 @@ the platform APIs that are available.
 * [`getAvailableFonts()`](#getavailablefonts)
 * [`findFonts(fontDescriptor)`](#findfontsfontdescriptor)
 * [`findFont(fontDescriptor)`](#findfontfontdescriptor)
-* [`substituteFont(postscriptName, text)`](#substitutefontpostscriptnametext)
+* [`substituteFont(postscriptName, text)`](#substitutefontpostscriptname-text)
 
 ### getAvailableFonts()
 
