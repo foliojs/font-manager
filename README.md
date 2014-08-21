@@ -16,35 +16,134 @@ A C++ module for Node.js providing access to the system font catalog.
 
 ## API
 
+All of the methods exported by `font-manager` have both synchronous and asynchronous versions available.
+You should generally prefer the asynchronous version as it will allow your program to continue doing other
+processing while a request for fonts is processing in the background, which may be expensive depending on
+the platform APIs that are available.
+
+* [`getAvailableFonts()`](#getavailablefonts)
+* [`findFonts(fontDescriptor)`](#findfontsfontdescriptor)
+* [`findFont(fontDescriptor)`](#findfontfontdescriptor)
+* [`substituteFont(postscriptName, text)`](#substitutefontpostscriptnametext)
+
+### `getAvailableFonts()`
+
+Returns an array of all font descriptors available on the system.
+
 ```javascript
-var fontManager = require('font-manager');
+// asynchronous API
+fontManager.getAvailableFonts(function(fonts) { ... });
 
-// list all available fonts
-fontManager.getAvailableFonts();
-//=> [{ path: '/path/to/font.ttf', postscriptName: 'name' }, ...]
+// synchronous API
+var fonts = fontManager.getAvailableFontsSync();
 
-// find fonts matching a font descriptor (see below for a list of supported fields)
-fontManager.findFonts({ family: 'Helvetica' });
-//=> [{ path: '/path/to/Helvetica.ttf', postscriptName: 'Helvetica' }, ...]
+// output
+[ { path: '/Library/Fonts/Arial.ttf',
+    postscriptName: 'ArialMT',
+    family: 'Arial',
+    style: 'Regular',
+    weight: 400,
+    width: 5,
+    italic: false,
+    monospace: false },
+  ... ]
+```
 
-// find the font with the best match
-fontManager.findFont({ family: 'Helvetica Neue', weight: 700 });
-//=> { path: '/path/to/Helvetica.ttf', postscriptName: 'Helvetica-Bold' }
+### `findFonts(fontDescriptor)`
 
-// substitute the font with the given postscript name
-// with another font that contains the given characters
-fontManager.substituteFont('TimesNewRomanPSMT', '汉字')
-//=> { path: '/Library/Fonts/Songti.ttc', postscriptName: 'STSongti-SC-Regular' }
+Returns an array of [font descriptors](#font-descriptor) matching a query 
+[font descriptor](#font-descriptor). 
+The returned array may be empty if no fonts match the font descriptor.
+
+```javascript
+// asynchronous API
+fontManager.findFonts({ family: 'Arial' }, function(fonts) { ... });
+
+// synchronous API
+var fonts = fontManager.findFontsSync({ family: 'Arial' });
+
+// output
+[ { path: '/Library/Fonts/Arial.ttf',
+    postscriptName: 'ArialMT',
+    family: 'Arial',
+    style: 'Regular',
+    weight: 400,
+    width: 5,
+    italic: false,
+    monospace: false },
+  { path: '/Library/Fonts/Arial Bold.ttf',
+    postscriptName: 'Arial-BoldMT',
+    family: 'Arial',
+    style: 'Bold',
+    weight: 700,
+    width: 5,
+    italic: false,
+    monospace: false } ]
+```
+
+### `findFont(fontDescriptor)`
+
+Returns a single [font descriptors](#font-descriptor) matching a query
+[font descriptors](#font-descriptor) as well as possible. This method
+always returns a result (never `null`), so sometimes the output will not 
+exactly match the input font descriptor if not all input parameters
+could be met.
+
+```javascript
+// asynchronous API
+fontManager.findFont({ family: 'Arial', weight: 700 }, function(font) { ... });
+
+// synchronous API
+var font = fontManager.findFontSync({ family: 'Arial', weight: 700 });
+
+// output
+{ path: '/Library/Fonts/Arial Bold.ttf',
+  postscriptName: 'Arial-BoldMT',
+  family: 'Arial',
+  style: 'Bold',
+  weight: 700,
+  width: 5,
+  italic: false,
+  monospace: false }
+```
+
+### `substituteFont(postscriptName, text)`
+
+Substitutes the font with the given `postscriptName` with another font
+that contains the characters in `text`.  If a font matching `postscriptName`
+is not found, a font containing the given characters is still returned.  If
+a font matching `postscriptName` *is* found, its characteristics (bold, italic, etc.)
+are used to find a suitable replacement.  If the font already contains the characters
+in `text`, it is not replaced and the font descriptor for the original font is returned.
+
+```javascript
+// asynchronous API
+fontManager.substituteFont('TimesNewRomanPSMT', '汉字', function(font) { ... });
+
+// synchronous API
+var font = fontManager.substituteFontSync('TimesNewRomanPSMT', '汉字');
+
+// output
+{ path: '/Library/Fonts/Songti.ttc',
+  postscriptName: 'STSongti-SC-Regular',
+  family: 'Songti SC',
+  style: 'Regular',
+  weight: 400,
+  width: 5,
+  italic: false,
+  monospace: false }
 ```
 
 ### Font Descriptor
 
 Font descriptors are normal JavaScript objects that describe characteristics of
-a font.  They are passed to the `findFonts` and `findFont` methods.  Any combination
-of the fields documented below can be used to find fonts.
+a font.  They are passed to the `findFonts` and `findFont` methods and returned by
+all of the methods.  Any combination of the fields documented below can be used to 
+find fonts, but all methods return full font descriptors.
 
 Name             | Type    | Description
 ---------------- | ------- | -----------
+`path`           | string  | The path to the font file in the filesystem. **(not applicable for queries, only for results)**
 `postscriptName` | string  | The PostScript name of the font (e.g `'Arial-BoldMT'`). This uniquely identities a font in most cases.
 `family`         | string  | The font family name (e.g `'Arial'`)
 `style`          | string  | The font style name (e.g. `'Bold'`)
