@@ -185,121 +185,78 @@ ResultSet *getAvailableFonts() {
   return res;
 }
 
-IDWriteFontList *findFontsByFamily(IDWriteFontCollection *collection, FontDescriptor *desc) {
-  WCHAR *family = utf8ToUtf16(desc->family);
+bool resultMatches(FontDescriptor *result, FontDescriptor *desc) {
+  if (desc->postscriptName && strcmp(desc->postscriptName, result->postscriptName) != 0)
+    return false;
 
-  unsigned int index;
-  BOOL exists;
-  HR(collection->FindFamilyName(family, &index, &exists));
-  delete family;
+  if (desc->family && strcmp(desc->family, result->family) != 0)
+    return false;
 
-  if (exists) {
-    IDWriteFontFamily *family = NULL;
-    HR(collection->GetFontFamily(index, &family));
+  if (desc->style && strcmp(desc->style, result->style) != 0)
+    return false;
 
-    IDWriteFontList *fontList = NULL;
-    HR(family->GetMatchingFonts(
-      desc->weight ? (DWRITE_FONT_WEIGHT) desc->weight : DWRITE_FONT_WEIGHT_NORMAL,
-      desc->width  ? (DWRITE_FONT_STRETCH) desc->width : DWRITE_FONT_STRETCH_UNDEFINED,
-      desc->italic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL,
-      &fontList
-    ));
+  if (desc->weight && desc->weight != result->weight)
+    return false;
 
-    return fontList;
-  }
+  if (desc->width && desc->width != result->width)
+    return false;
 
-  return NULL;
+  if (desc->italic != result->italic)
+    return false;
+
+  if (desc->monospace != result->monospace)
+    return false;
+
+  return true;
 }
 
-IDWriteFont *findFontByPostscriptName(IDWriteFontCollection *collection, FontDescriptor *desc) {
-  // Get the number of font families in the collection.
-  int familyCount = collection->GetFontFamilyCount();
-
-  for (int i = 0; i < familyCount; i++) {
-    IDWriteFontFamily *family = NULL;
-    int fontCount = 0;
-
-    // Get the font family.
-    HR(collection->GetFontFamily(i, &family));
-    fontCount = family->GetFontCount();
-
-    for (int j = 0; j < fontCount; j++) {
-      IDWriteFont *font = NULL;
-      HR(family->GetFont(j, &font));
-
-      char *psName = getString(font, DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_NAME);
-      if (strcmp(psName, desc->postscriptName) == 0) {
-        delete psName;
-        return font;
-      }
-
-      delete psName;
-    }
-  }
-
-  return NULL;
-}
-
-// TODO: style, monospace
 ResultSet *findFonts(FontDescriptor *desc) {
-  ResultSet *res = new ResultSet();
-  
-  IDWriteFactory *factory = NULL;
-  HR(DWriteCreateFactory(
-    DWRITE_FACTORY_TYPE_SHARED,
-    __uuidof(IDWriteFactory),
-    reinterpret_cast<IUnknown**>(&factory)
-  ));
+  ResultSet *fonts = getAvailableFonts();
 
-  // Get the system font collection.
-  IDWriteFontCollection *collection = NULL;
-  HR(factory->GetSystemFontCollection(&collection));
-
-  if (desc->family) {
-    IDWriteFontList *fonts = findFontsByFamily(collection, desc);
-    int fontCount = fonts ? fonts->GetFontCount() : 0;
-
-    for (int j = 0; j < fontCount; j++) {
-      IDWriteFont *font = NULL;
-      HR(fonts->GetFont(j, &font));
-      res->push_back(resultFromFont(font));
+  for (ResultSet::iterator it = fonts->begin(); it != fonts->end();) {
+    if (!resultMatches(*it, desc)) {
+      delete *it;
+      it = fonts->erase(it);
+    } else {
+      it++;
     }
-  } else if (desc->postscriptName) {
-    IDWriteFont *font = findFontByPostscriptName(collection, desc);
-    if (font)
-      res->push_back(resultFromFont(font));
   }
 
-  // TODO: what about font descriptors with no family or postscriptName?
-
-  return res;
+  return fonts;
 }
 
 FontDescriptor *findFont(FontDescriptor *desc) {
-  IDWriteFactory *factory = NULL;
-  HR(DWriteCreateFactory(
-    DWRITE_FACTORY_TYPE_SHARED,
-    __uuidof(IDWriteFactory),
-    reinterpret_cast<IUnknown**>(&factory)
-  ));
+  ResultSet *fonts = findFonts(desc);
 
-  // Get the system font collection.
-  IDWriteFontCollection *collection = NULL;
-  HR(factory->GetSystemFontCollection(&collection));
+  // if we didn't find anything, try again with only the font traits, no string names
+  if (fonts->size() == 0) {
+    delete fonts;
 
-  IDWriteFont *font = NULL;
-  if (desc->family) {
-    IDWriteFontList *fonts = findFontsByFamily(collection, desc);
-    if (fonts && fonts->GetFontCount() > 0)
-      fonts->GetFont(0, &font);
-  } else if (desc->postscriptName) {
-    font = findFontByPostscriptName(collection, desc);
+    FontDescriptor *fallback = new FontDescriptor(
+      NULL, NULL, NULL, NULL, 
+      desc->weight, desc->width, desc->italic, false
+    );
+
+    fonts = findFonts(fallback);
   }
 
-  if (font) {
-    return resultFromFont(font);
+  // ok, nothing. shouldn't happen often. 
+  // just return the first available font
+  if (fonts->size() == 0) {
+    delete fonts;
+    fonts = getAvailableFonts();
   }
 
+  // hopefully we found something now.
+  // copy and return the first result
+  if (fonts->size() > 0) {
+    FontDescriptor *res = new FontDescriptor(fonts->front());
+    delete fonts;
+    return res;
+  }
+
+  // whoa, weird. no fonts installed or something went wrong.
+  delete fonts;
   return NULL;
 }
 
@@ -436,39 +393,30 @@ FontDescriptor *substituteFont(char *postscriptName, char *string) {
   // find the font for the given postscript name
   FontDescriptor *desc = new FontDescriptor();
   desc->postscriptName = postscriptName;
-  IDWriteFont *font = findFontByPostscriptName(collection, desc);
+  FontDescriptor *font = findFont(desc);
+
+  // create a text format object for this font
   IDWriteTextFormat *format = NULL;
-
   if (font) {
-    // get the font family name
-    IDWriteFontFamily *family = NULL;
-    HR(font->GetFontFamily(&family));
-
-    IDWriteLocalizedStrings *names = NULL;
-    HR(family->GetFamilyNames(&names));
-
-    unsigned int length = 0;
-    HR(names->GetStringLength(0, &length));
-    WCHAR *familyName = new WCHAR[length + 1];
-    HR(names->GetString(0, familyName, length + 1));
+    WCHAR *familyName = utf8ToUtf16(font->family);
 
     // create a text format
     HR(factory->CreateTextFormat(
       familyName,
       collection,
-      font->GetWeight(),
-      font->GetStyle(),
-      font->GetStretch(),
+      (DWRITE_FONT_WEIGHT) font->weight,
+      font->italic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL,
+      (DWRITE_FONT_STRETCH) font->width,
       12.0,
       L"en-us",
       &format
     ));
 
     delete familyName;
-    names->Release();
-    family->Release();
-    font->Release();
+    delete font;
   } else {
+    // this should never happen, but just in case, let the system
+    // decide the default font in case findFont returned nothing.
     HR(factory->CreateTextFormat(
       L"",
       collection,
@@ -511,6 +459,7 @@ FontDescriptor *substituteFont(char *postscriptName, char *string) {
 
   desc->postscriptName = NULL;
   delete desc;
+  delete str;
   collection->Release();
   factory->Release();
 
