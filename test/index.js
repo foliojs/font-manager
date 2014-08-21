@@ -353,17 +353,23 @@ describe('font-manager', function() {
       });
     });
     
-    it('should return null for nonexistent family', function(done) {
+    it('should return a fallback font for nonexistent family', function() {
       fontManager.findFont({ family: '' + Date.now() }, function(font) {
-        assert.equal(font, null);
-        done();
+        assertFontDescriptor(font);
       });
     });
     
-    it('should return null for nonexistent postscriptName', function(done) {
+    it('should return a fallback font for nonexistent postscriptName', function() {
       fontManager.findFont({ postscriptName: '' + Date.now() }, function(font) {
-        assert.equal(font, null);
-        done();
+        assertFontDescriptor(font);
+      });
+    });
+    
+    it('should return a fallback font matching traits as best as possible', function() {
+      fontManager.findFont({ family: '' + Date.now(), italic: true, weight: 700 }, function(font) {
+        assertFontDescriptor(font);
+        assert.equal(font.italic, true);
+        assert.equal(font.weight, 700);
       });
     });
     
@@ -429,14 +435,21 @@ describe('font-manager', function() {
       assert.equal(font.weight, 700);
     });
     
-    it('should return null for nonexistent family', function() {
+    it('should return a fallback font for nonexistent family', function() {
       var font = fontManager.findFontSync({ family: '' + Date.now() });
-      assert.equal(font, null);
+      assertFontDescriptor(font);
     });
     
-    it('should return null for nonexistent postscriptName', function() {
+    it('should return a fallback font for nonexistent postscriptName', function() {
       var font = fontManager.findFontSync({ postscriptName: '' + Date.now() });
-      assert.equal(font, null);
+      assertFontDescriptor(font);
+    });
+    
+    it('should return a fallback font matching traits as best as possible', function() {
+      var font = fontManager.findFontSync({ family: '' + Date.now(), italic: true, weight: 700 });
+      assertFontDescriptor(font);
+      assert.equal(font.italic, true);
+      assert.equal(font.weight, 700);
     });
     
     it('should return a font for empty font descriptor', function() {
