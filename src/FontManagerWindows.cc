@@ -254,13 +254,13 @@ ResultSet *findFonts(FontDescriptor *desc) {
       HR(fonts->GetFont(j, &font));
       res->push_back(resultFromFont(font));
     }
-
-    return res;
   } else if (desc->postscriptName) {
     IDWriteFont *font = findFontByPostscriptName(collection, desc);
-    res->push_back(resultFromFont(font));
-    return res;
+    if (font)
+      res->push_back(resultFromFont(font));
   }
+
+  // TODO: what about font descriptors with no family or postscriptName?
 
   return res;
 }
@@ -427,6 +427,7 @@ FontDescriptor *substituteFont(char *postscriptName, char *string) {
   FontDescriptor *desc = new FontDescriptor();
   desc->postscriptName = postscriptName;
   IDWriteFont *font = findFontByPostscriptName(collection, desc);
+  IDWriteTextFormat *format = NULL;
 
   if (font) {
     // get the font family name
@@ -441,11 +442,7 @@ FontDescriptor *substituteFont(char *postscriptName, char *string) {
     WCHAR *familyName = new WCHAR[length + 1];
     HR(names->GetString(0, familyName, length + 1));
 
-    // convert utf8 string for substitution to utf16
-    WCHAR *str = utf8ToUtf16(string);
-
     // create a text format
-    IDWriteTextFormat *format = NULL;
     HR(factory->CreateTextFormat(
       familyName,
       collection,
@@ -457,36 +454,50 @@ FontDescriptor *substituteFont(char *postscriptName, char *string) {
       &format
     ));
 
-    // create a text layout for the substitution string
-    IDWriteTextLayout *layout = NULL;
-    HR(factory->CreateTextLayout(
-      str,
-      wcslen(str),
-      format,
-      100.0,
-      100.0,
-      &layout
-    ));
-
-    // render it using a custom renderer that saves the physical font being used
-    FontFallbackRenderer *renderer = new FontFallbackRenderer(collection);
-    HR(layout->Draw(NULL, renderer, 100.0, 100.0));
-
-    // if we found something, create a result object
-    if (renderer->font) {
-      res = resultFromFont(renderer->font);
-    }
-
-    // free all the things
-    delete renderer;
-    layout->Release();
-    format->Release();
-    delete str;
     delete familyName;
     names->Release();
     family->Release();
     font->Release();
+  } else {
+    HR(factory->CreateTextFormat(
+      L"",
+      collection,
+      DWRITE_FONT_WEIGHT_REGULAR,
+      DWRITE_FONT_STYLE_NORMAL,
+      DWRITE_FONT_STRETCH_NORMAL,
+      12.0,
+      L"en-us",
+      &format
+    ));
   }
+
+  // convert utf8 string for substitution to utf16
+  WCHAR *str = utf8ToUtf16(string);
+
+  // create a text layout for the substitution string
+  IDWriteTextLayout *layout = NULL;
+  HR(factory->CreateTextLayout(
+    str,
+    wcslen(str),
+    format,
+    100.0,
+    100.0,
+    &layout
+  ));
+
+  // render it using a custom renderer that saves the physical font being used
+  FontFallbackRenderer *renderer = new FontFallbackRenderer(collection);
+  HR(layout->Draw(NULL, renderer, 100.0, 100.0));
+
+  // if we found something, create a result object
+  if (renderer->font) {
+    res = resultFromFont(renderer->font);
+  }
+
+  // free all the things
+  delete renderer;
+  layout->Release();
+  format->Release();
 
   desc->postscriptName = NULL;
   delete desc;

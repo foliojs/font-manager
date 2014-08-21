@@ -519,7 +519,7 @@ describe('font-manager', function() {
       });
     });
     
-    it('should return null if no font exists for the given postscriptName', function(done) {
+    it('should return a default font if no font exists for the given postscriptName', function(done) {
       fontManager.substituteFont('' + Date.now(), '汉字', function(font) {
         assertFontDescriptor(font);
         done();
