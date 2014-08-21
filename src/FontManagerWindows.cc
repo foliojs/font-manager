@@ -112,6 +112,7 @@ FontDescriptor *resultFromFont(IDWriteFont *font) {
       name = new WCHAR[nameLength + 1];
       HR(fileLoader->GetFilePathFromKey(referenceKey, referenceKeySize, name, nameLength + 1));
 
+      char *psName = utf16ToUtf8(name);
       char *postscriptName = getString(font, DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_NAME);
       char *family = getString(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES);
       char *style = getString(font, DWRITE_INFORMATIONAL_STRING_WIN32_SUBFAMILY_NAMES);
@@ -121,7 +122,7 @@ FontDescriptor *resultFromFont(IDWriteFont *font) {
       bool monospace = face1->IsMonospacedFont();
 
       res = new FontDescriptor(
-        utf16ToUtf8(name),
+        psName,
         postscriptName,
         family,
         style,
@@ -131,6 +132,7 @@ FontDescriptor *resultFromFont(IDWriteFont *font) {
         monospace
       );
 
+      delete psName;
       delete name;
       delete postscriptName;
       delete family;
