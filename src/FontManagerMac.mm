@@ -181,27 +181,41 @@ ResultSet *findFonts(FontDescriptor *desc) {
   return results;
 }
 
+CTFontDescriptorRef findBest(FontDescriptor *desc, NSArray *matches) {
+  // find the closest match for width and weight attributes
+  CTFontDescriptorRef best = NULL;
+  int bestMetric = INT_MAX;
+
+  for (id m in matches) {
+    int metric = metricForMatch((CTFontDescriptorRef) m, desc);
+
+    if (metric < bestMetric) {
+      bestMetric = metric;
+      best = (CTFontDescriptorRef) m;
+    }
+
+    // break if this is an exact match
+    if (metric == 0)
+      break;
+  }
+  
+  return best;
+}
+
 FontDescriptor *findFont(FontDescriptor *desc) {  
   FontDescriptor *res = NULL;
   CTFontDescriptorRef descriptor = getFontDescriptor(desc);
   NSArray *matches = (NSArray *) CTFontDescriptorCreateMatchingFontDescriptors(descriptor, NULL);
   
-  // find the closest match for width and weight attributes
-  CTFontDescriptorRef best = NULL;
-  int bestMetric = INT_MAX;
-  
-  for (id m in matches) {
-    int metric = metricForMatch((CTFontDescriptorRef) m, desc);
-    
-    if (metric < bestMetric) {
-      bestMetric = metric;
-      best = (CTFontDescriptorRef) m;
-    }
-        
-    // break if this is an exact match
-    if (metric == 0)
-      break;
+  // if there was no match, try again but only try to match traits
+  if ([matches count] == 0) {
+    [matches release];
+    NSSet *set = [NSSet setWithObjects:(id)kCTFontTraitsAttribute, nil];
+    matches = (NSArray *) CTFontDescriptorCreateMatchingFontDescriptors(descriptor, (CFSetRef) set);
   }
+  
+  // find the closest match for width and weight attributes
+  CTFontDescriptorRef best = findBest(desc, matches);
       
   // if we found a match, generate and return a URL for it
   if (best) {    
