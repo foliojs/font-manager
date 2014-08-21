@@ -78,6 +78,17 @@ public:
     this->italic = italic;
     this->monospace = monospace;
   }
+
+  FontDescriptor(FontDescriptor *desc) {
+    path = copyString(desc->path);
+    postscriptName = copyString(desc->postscriptName);
+    family = copyString(desc->family);
+    style = copyString(desc->style);
+    weight = desc->weight;
+    width = desc->width;
+    italic = desc->italic;
+    monospace = desc->monospace;
+  }
   
   ~FontDescriptor() {
     if (path)
@@ -112,6 +123,9 @@ public:
   
 private:
   char *copyString(const char *input) {
+    if (!input)
+      return NULL;
+
     char *str = new char[strlen(input) + 1];
     strcpy(str, input);
     return str;
