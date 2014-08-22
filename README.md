@@ -44,7 +44,7 @@ the platform APIs that are available.
 
 ### getAvailableFonts()
 
-Returns an array of all font descriptors available on the system.
+Returns an array of all [font descriptors](#font-descriptor) available on the system.
 
 ```javascript
 // asynchronous API
