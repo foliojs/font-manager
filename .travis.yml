@@ -3,4 +3,5 @@ node_js:
   - "0.11"
   - "0.10"
 before_install:
-  - sudo apt-get install libfontconfig-dev
+  - sudo apt-get update -qq
+  - sudo apt-get install -y libfontconfig-dev
