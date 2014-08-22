@@ -1,7 +1,11 @@
 language: node_js
 node_js:
-  - "0.11"
   - "0.10"
+  
 before_install:
-  - sudo apt-get update -qq
-  - sudo apt-get install -y libfontconfig-dev
+  - sudo apt-add-repository 'deb http://archive.ubuntu.com/ubuntu trusty main restricted universe multiverse'
+  - sudo apt-get -yqq update
+  
+install:
+  - sudo apt-get install -y -t trusty libfontconfig1-dev
+  - sudo apt-get install -y ttf-droid
