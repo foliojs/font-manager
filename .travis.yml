@@ -10,3 +10,4 @@ os:
   
 before_install:
   - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then ./travis-linux.sh; fi
+  - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then ./travis-osx.sh; fi
