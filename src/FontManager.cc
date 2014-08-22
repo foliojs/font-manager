@@ -103,10 +103,8 @@ NAN_METHOD(getAvailableFonts) {
   NanScope();
   
   if (async) {
-    if (args.Length() < 1 || !args[0]->IsFunction()) {
-      NanThrowTypeError("Expected a callback");
-      NanReturnUndefined();
-    }
+    if (args.Length() < 1 || !args[0]->IsFunction())
+      return NanThrowTypeError("Expected a callback");
     
     AsyncRequest *req = new AsyncRequest(args[0]);
     uv_queue_work(uv_default_loop(), &req->work, getAvailableFontsAsync, (uv_after_work_cb) asyncCallback);
@@ -126,19 +124,15 @@ template<bool async>
 NAN_METHOD(findFonts) {
   NanScope();
   
-  if (args.Length() < 1 || !args[0]->IsObject() || args[0]->IsFunction()) {
-    NanThrowTypeError("Expected a font descriptor");
-    NanReturnUndefined();
-  }
+  if (args.Length() < 1 || !args[0]->IsObject() || args[0]->IsFunction())
+    return NanThrowTypeError("Expected a font descriptor");
   
   Local<Object> desc = args[0].As<Object>();
   FontDescriptor *descriptor = new FontDescriptor(desc);
   
   if (async) {
-    if (args.Length() < 2 || !args[1]->IsFunction()) {
-      NanThrowTypeError("Expected a callback");
-      NanReturnUndefined();
-    }
+    if (args.Length() < 2 || !args[1]->IsFunction())
+      return NanThrowTypeError("Expected a callback");
     
     AsyncRequest *req = new AsyncRequest(args[1]);
     req->desc = descriptor;
@@ -161,19 +155,15 @@ template<bool async>
 NAN_METHOD(findFont) {  
   NanScope();
   
-  if (args.Length() < 1 || !args[0]->IsObject() || args[0]->IsFunction()) {
-    NanThrowTypeError("Expected a font descriptor");
-    NanReturnUndefined();
-  }
+  if (args.Length() < 1 || !args[0]->IsObject() || args[0]->IsFunction())
+    return NanThrowTypeError("Expected a font descriptor");
 
   Local<Object> desc = args[0].As<Object>();
   FontDescriptor *descriptor = new FontDescriptor(desc);
   
   if (async) {
-    if (args.Length() < 2 || !args[1]->IsFunction()) {
-      NanThrowTypeError("Expected a callback");
-      NanReturnUndefined();
-    }
+    if (args.Length() < 2 || !args[1]->IsFunction())
+      return NanThrowTypeError("Expected a callback");
     
     AsyncRequest *req = new AsyncRequest(args[1]);
     req->desc = descriptor;
@@ -196,24 +186,18 @@ template<bool async>
 NAN_METHOD(substituteFont) {
   NanScope();
   
-  if (args.Length() < 1 || !args[0]->IsString()) {
-    NanThrowTypeError("Expected postscript name");
-    NanReturnUndefined();
-  }
+  if (args.Length() < 1 || !args[0]->IsString())
+    return NanThrowTypeError("Expected postscript name");
   
-  if (args.Length() < 2 || !args[1]->IsString()) {
-    NanThrowTypeError("Expected substitution string");
-    NanReturnUndefined();
-  }
+  if (args.Length() < 2 || !args[1]->IsString())
+    return NanThrowTypeError("Expected substitution string");
   
   NanUtf8String postscriptName(args[0]);
   NanUtf8String substitutionString(args[1]);
     
   if (async) {
-    if (args.Length() < 3 || !args[2]->IsFunction()) {
-      NanThrowTypeError("Expected a callback");
-      NanReturnUndefined();
-    }
+    if (args.Length() < 3 || !args[2]->IsFunction())
+      return NanThrowTypeError("Expected a callback");
     
     // copy the strings since the JS garbage collector might run before the async request is finished
     char *ps = new char[postscriptName.Size() + 1];
