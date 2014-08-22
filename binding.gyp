@@ -3,6 +3,9 @@
     {
       "target_name": "fontmanager",
       "sources": [ "src/FontManager.cc" ],
+      "include_dirs" : [
+        "<!(node -e \"require('nan')\")"
+      ],
       "conditions": [
         ['OS=="mac"', {
           "sources": ["src/FontManagerMac.mm"],

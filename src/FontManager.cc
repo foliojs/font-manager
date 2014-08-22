@@ -2,6 +2,7 @@
 #include <node.h>
 #include <uv.h>
 #include <v8.h>
+#include <nan.h>
 #include "FontDescriptor.h"
 
 using namespace v8;
@@ -14,7 +15,8 @@ FontDescriptor *substituteFont(char *, char *);
 
 // converts a ResultSet to a JavaScript array
 Local<Array> collectResults(ResultSet *results) {
-  Local<Array> res = Array::New(results->size());
+  NanEscapableScope();
+  Local<Array> res = NanNew<Array>(results->size());
     
   int i = 0;
   for (ResultSet::iterator it = results->begin(); it != results->end(); it++) {
@@ -22,33 +24,34 @@ Local<Array> collectResults(ResultSet *results) {
   }
   
   delete results;
-  return res;
+  return NanEscapeScope(res);
 }
 
 // converts a FontDescriptor to a JavaScript object
 Handle<Value> wrapResult(FontDescriptor *result) {
+  NanEscapableScope();
   if (result == NULL)
-    return Null();
+    return NanEscapeScope(NanNull());
   
   Local<Object> res = result->toJSObject();
   delete result;
-  return res;
+  return NanEscapeScope(res);
 }
 
 // holds data about an operation that will be 
 // performed on a background thread
 struct AsyncRequest {
   uv_work_t work;
-  FontDescriptor *desc;           // used by findFont and findFonts
-  char *postscriptName;           // used by substituteFont
-  char *substitutionString;       // ditto
-  FontDescriptor *result;         // for functions with a single result
-  ResultSet *results;             // for functions with multiple results
-  Persistent<Function> callback;  // the actual JS callback to call when we are done
+  FontDescriptor *desc;     // used by findFont and findFonts
+  char *postscriptName;     // used by substituteFont
+  char *substitutionString; // ditto
+  FontDescriptor *result;   // for functions with a single result
+  ResultSet *results;       // for functions with multiple results
+  NanCallback *callback;    // the actual JS callback to call when we are done
   
   AsyncRequest(Local<Value> v) {
     work.data = (void *)this;
-    callback = Persistent<Function>::New(Local<Function>::Cast(v));
+    callback = new NanCallback(v.As<Function>());
     desc = NULL;
     postscriptName = NULL;
     substitutionString = NULL;
@@ -57,7 +60,7 @@ struct AsyncRequest {
   }
   
   ~AsyncRequest() {
-    callback.Dispose();
+    delete callback;
     
     if (desc)
       delete desc;
@@ -74,6 +77,7 @@ struct AsyncRequest {
 
 // calls the JavaScript callback for a request
 void asyncCallback(uv_work_t *work, int status) {
+  NanScope();
   AsyncRequest *req = (AsyncRequest *) work->data;
   Handle<Value> args[1];
   
@@ -82,10 +86,10 @@ void asyncCallback(uv_work_t *work, int status) {
   } else if (req->result) {
     args[0] = wrapResult(req->result);
   } else {
-    args[0] = Null();
+    args[0] = NanNull();
   }
   
-  req->callback->Call(Context::GetCurrent()->Global(), 1, args);
+  req->callback->Call(1, args);
   delete req;
 }
 
@@ -95,21 +99,21 @@ void getAvailableFontsAsync(uv_work_t *work) {
 }
 
 template<bool async>
-Handle<Value> getAvailableFonts(const Arguments& args) {
-  HandleScope scope;
+NAN_METHOD(getAvailableFonts) {
+  NanScope();
   
   if (async) {
     if (args.Length() < 1 || !args[0]->IsFunction()) {
-      ThrowException(Exception::TypeError(String::New("Expected a callback")));
-      return scope.Close(Undefined());
+      NanThrowTypeError("Expected a callback");
+      NanReturnUndefined();
     }
     
     AsyncRequest *req = new AsyncRequest(args[0]);
     uv_queue_work(uv_default_loop(), &req->work, getAvailableFontsAsync, asyncCallback);
     
-    return scope.Close(Undefined());
+    NanReturnUndefined();
   } else {
-    return scope.Close(collectResults(getAvailableFonts()));
+    NanReturnValue(collectResults(getAvailableFonts()));
   }
 }
 
@@ -119,32 +123,32 @@ void findFontsAsync(uv_work_t *work) {
 }
 
 template<bool async>
-Handle<Value> findFonts(const Arguments& args) {
-  HandleScope scope;
+NAN_METHOD(findFonts) {
+  NanScope();
   
   if (args.Length() < 1 || !args[0]->IsObject() || args[0]->IsFunction()) {
-    ThrowException(Exception::TypeError(String::New("Expected a font descriptor")));
-    return scope.Close(Undefined());
+    NanThrowTypeError("Expected a font descriptor");
+    NanReturnUndefined();
   }
   
-  Local<Object> desc = Local<Object>::Cast(args[0]);
+  Local<Object> desc = args[0].As<Object>();
   FontDescriptor *descriptor = new FontDescriptor(desc);
   
   if (async) {
     if (args.Length() < 2 || !args[1]->IsFunction()) {
-      ThrowException(Exception::TypeError(String::New("Expected a callback")));
-      return scope.Close(Undefined());
+      NanThrowTypeError("Expected a callback");
+      NanReturnUndefined();
     }
     
     AsyncRequest *req = new AsyncRequest(args[1]);
     req->desc = descriptor;
     uv_queue_work(uv_default_loop(), &req->work, findFontsAsync, asyncCallback);
     
-    return scope.Close(Undefined());
+    NanReturnUndefined();
   } else {
     Local<Object> res = collectResults(findFonts(descriptor));
     delete descriptor;
-    return scope.Close(res);
+    NanReturnValue(res);
   }
 }
 
@@ -154,32 +158,32 @@ void findFontAsync(uv_work_t *work) {
 }
 
 template<bool async>
-Handle<Value> findFont(const Arguments& args) {  
-  HandleScope scope;
+NAN_METHOD(findFont) {  
+  NanScope();
   
   if (args.Length() < 1 || !args[0]->IsObject() || args[0]->IsFunction()) {
-    ThrowException(Exception::TypeError(String::New("Expected a font descriptor")));
-    return scope.Close(Undefined());
+    NanThrowTypeError("Expected a font descriptor");
+    NanReturnUndefined();
   }
 
-  Local<Object> desc = Local<Object>::Cast(args[0]);
+  Local<Object> desc = args[0].As<Object>();
   FontDescriptor *descriptor = new FontDescriptor(desc);
   
   if (async) {
     if (args.Length() < 2 || !args[1]->IsFunction()) {
-      ThrowException(Exception::TypeError(String::New("Expected a callback")));
-      return scope.Close(Undefined());
+      NanThrowTypeError("Expected a callback");
+      NanReturnUndefined();
     }
     
     AsyncRequest *req = new AsyncRequest(args[1]);
     req->desc = descriptor;
     uv_queue_work(uv_default_loop(), &req->work, findFontAsync, asyncCallback);
     
-    return scope.Close(Undefined());
+    NanReturnUndefined();
   } else {
     Handle<Value> res = wrapResult(findFont(descriptor));
     delete descriptor;
-    return scope.Close(res);
+    NanReturnValue(res);
   }
 }
 
@@ -189,33 +193,33 @@ void substituteFontAsync(uv_work_t *work) {
 }
 
 template<bool async>
-Handle<Value> substituteFont(const Arguments& args) {
-  HandleScope scope;
+NAN_METHOD(substituteFont) {
+  NanScope();
   
   if (args.Length() < 1 || !args[0]->IsString()) {
-    ThrowException(Exception::TypeError(String::New("Expected postscript name")));
-    return scope.Close(Undefined());
+    NanThrowTypeError("Expected postscript name");
+    NanReturnUndefined();
   }
   
   if (args.Length() < 2 || !args[1]->IsString()) {
-    ThrowException(Exception::TypeError(String::New("Expected substitution string")));
-    return scope.Close(Undefined());
+    NanThrowTypeError("Expected substitution string");
+    NanReturnUndefined();
   }
   
-  v8::String::Utf8Value postscriptName(args[0]);
-  v8::String::Utf8Value substitutionString(args[1]);
+  NanUtf8String postscriptName(args[0]);
+  NanUtf8String substitutionString(args[1]);
     
   if (async) {
     if (args.Length() < 3 || !args[2]->IsFunction()) {
-      ThrowException(Exception::TypeError(String::New("Expected a callback")));
-      return scope.Close(Undefined());
+      NanThrowTypeError("Expected a callback");
+      NanReturnUndefined();
     }
     
     // copy the strings since the JS garbage collector might run before the async request is finished
-    char *ps = new char[postscriptName.length() + 1];
+    char *ps = new char[postscriptName.Size() + 1];
     strcpy(ps, *postscriptName);
   
-    char *sub = new char[substitutionString.length() + 1];
+    char *sub = new char[substitutionString.Size() + 1];
     strcpy(sub, *substitutionString);
     
     AsyncRequest *req = new AsyncRequest(args[2]);
@@ -223,9 +227,9 @@ Handle<Value> substituteFont(const Arguments& args) {
     req->substitutionString = sub;
     uv_queue_work(uv_default_loop(), &req->work, substituteFontAsync, asyncCallback);
     
-    return scope.Close(Undefined());
+    NanReturnUndefined();
   } else {
-    return scope.Close(wrapResult(substituteFont(*postscriptName, *substitutionString)));
+    NanReturnValue(wrapResult(substituteFont(*postscriptName, *substitutionString)));
   }
 }
 

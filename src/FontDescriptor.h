@@ -2,6 +2,7 @@
 #define FONT_DESCRIPTOR_H
 #include <node.h>
 #include <v8.h>
+#include <nan.h>
 #include <stdlib.h>
 #include <string.h>
 #include <vector>
@@ -109,16 +110,17 @@ public:
   }
   
   Local<Object> toJSObject() {
-    Local<Object> res = Object::New();
-    res->Set(String::NewSymbol("path"), String::New(path));
-    res->Set(String::NewSymbol("postscriptName"), String::New(postscriptName));
-    res->Set(String::NewSymbol("family"), String::New(family));
-    res->Set(String::NewSymbol("style"), String::New(style));
-    res->Set(String::NewSymbol("weight"), Uint32::New(weight));
-    res->Set(String::NewSymbol("width"), Uint32::New(width));
-    res->Set(String::NewSymbol("italic"), v8::Boolean::New(italic));
-    res->Set(String::NewSymbol("monospace"), v8::Boolean::New(monospace));
-    return res;
+    NanEscapableScope();
+    Local<Object> res = NanNew<Object>();
+    res->Set(NanNew<String>("path"), NanNew<String>(path));
+    res->Set(NanNew<String>("postscriptName"), NanNew<String>(postscriptName));
+    res->Set(NanNew<String>("family"), NanNew<String>(family));
+    res->Set(NanNew<String>("style"), NanNew<String>(style));
+    res->Set(NanNew<String>("weight"), NanNew<Number>(weight));
+    res->Set(NanNew<String>("width"), NanNew<Number>(width));
+    res->Set(NanNew<String>("italic"), NanNew<v8::Boolean>(italic));
+    res->Set(NanNew<String>("monospace"), NanNew<v8::Boolean>(monospace));
+    return NanEscapeScope(res);
   }
   
 private:
@@ -132,18 +134,19 @@ private:
   }
   
   char *getString(Local<Object> obj, const char *name) {
-    Local<Value> value = obj->Get(String::New(name));
+    NanScope();
+    Local<Value> value = obj->Get(NanNew<String>(name));
     
     if (value->IsString()) {
-      v8::String::Utf8Value string(value);
-      return copyString(*string);
+      return copyString(*NanUtf8String(value));
     }
   
     return NULL;
   }
   
   int getNumber(Local<Object> obj, const char *name) {
-    Local<Value> value = obj->Get(String::New(name));
+    NanScope();
+    Local<Value> value = obj->Get(NanNew<String>(name));
     
     if (value->IsNumber()) {
       return value->Int32Value();
@@ -153,7 +156,8 @@ private:
   }
   
   bool getBool(Local<Object> obj, const char *name) {
-    Local<Value> value = obj->Get(String::New(name));
+    NanScope();
+    Local<Value> value = obj->Get(NanNew<String>(name));
     
     if (value->IsBoolean()) {
       return value->BooleanValue();
