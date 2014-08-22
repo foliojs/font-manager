@@ -1,7 +1,6 @@
 #include <Foundation/Foundation.h>
 #include <CoreText/CoreText.h>
 #include "FontDescriptor.h"
-// #include "FontManagerResult.h"
 
 // converts a CoreText weight (-1 to +1) to a standard weight (100 to 900)
 static int convertWeight(float weight) {
