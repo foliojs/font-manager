@@ -76,7 +76,7 @@ struct AsyncRequest {
 };
 
 // calls the JavaScript callback for a request
-void asyncCallback(uv_work_t *work, int status) {
+void asyncCallback(uv_work_t *work) {
   NanScope();
   AsyncRequest *req = (AsyncRequest *) work->data;
   Handle<Value> args[1];
@@ -109,7 +109,7 @@ NAN_METHOD(getAvailableFonts) {
     }
     
     AsyncRequest *req = new AsyncRequest(args[0]);
-    uv_queue_work(uv_default_loop(), &req->work, getAvailableFontsAsync, asyncCallback);
+    uv_queue_work(uv_default_loop(), &req->work, getAvailableFontsAsync, (uv_after_work_cb) asyncCallback);
     
     NanReturnUndefined();
   } else {
@@ -142,7 +142,7 @@ NAN_METHOD(findFonts) {
     
     AsyncRequest *req = new AsyncRequest(args[1]);
     req->desc = descriptor;
-    uv_queue_work(uv_default_loop(), &req->work, findFontsAsync, asyncCallback);
+    uv_queue_work(uv_default_loop(), &req->work, findFontsAsync, (uv_after_work_cb) asyncCallback);
     
     NanReturnUndefined();
   } else {
@@ -177,7 +177,7 @@ NAN_METHOD(findFont) {
     
     AsyncRequest *req = new AsyncRequest(args[1]);
     req->desc = descriptor;
-    uv_queue_work(uv_default_loop(), &req->work, findFontAsync, asyncCallback);
+    uv_queue_work(uv_default_loop(), &req->work, findFontAsync, (uv_after_work_cb) asyncCallback);
     
     NanReturnUndefined();
   } else {
@@ -225,7 +225,7 @@ NAN_METHOD(substituteFont) {
     AsyncRequest *req = new AsyncRequest(args[2]);
     req->postscriptName = ps;
     req->substitutionString = sub;
-    uv_queue_work(uv_default_loop(), &req->work, substituteFontAsync, asyncCallback);
+    uv_queue_work(uv_default_loop(), &req->work, substituteFontAsync, (uv_after_work_cb) asyncCallback);
     
     NanReturnUndefined();
   } else {
