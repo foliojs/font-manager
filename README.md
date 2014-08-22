@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/devongovett/font-manager.svg)](https://travis-ci.org/devongovett/font-manager)
+
 # font-manager
 
 A C++ module for Node.js providing access to the system font catalog.
