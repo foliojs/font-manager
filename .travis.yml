@@ -1,12 +1,23 @@
-language: node_js
-node_js:
-  - "0.8"
-  - "0.10"
-  - "0.11"
+# language: node_js
+# node_js:
+#   - "0.8"
+#   - "0.10"
+#   - "0.11"
   
 os:
-  - linux
+  # - linux
+  - osx
   
 before_install:
   - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then ./travis-linux.sh; fi
   - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then ./travis-osx.sh; fi
+  - nvm install 0.10
+  - npm config set spin false
+  - node --version
+  - npm --version
+  
+install:
+  - npm install
+  
+script:
+  - npm test
