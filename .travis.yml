@@ -1,3 +1,4 @@
+# setup build matrix
 env:
   - NODE_VERSION=0.8
   - NODE_VERSION=0.10
@@ -8,15 +9,21 @@ os:
   - osx
   
 before_install:
-  - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then ./travis-linux.sh; fi
-  - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then ./travis-osx.sh; fi
+  # install nvm if it isn't already installed (the mac VMs don't have it)
+  - if ! which nvm &> /dev/null; then curl -s https://raw.githubusercontent.com/creationix/nvm/v0.13.1/install.sh | bash; fi
   - . ~/.nvm/nvm.sh
+  
+  # install node
   - nvm install $NODE_VERSION
   - npm config set spin false
   - node --version
   - npm --version
   
 install:
+  # on linux, install some dependencies and fonts used for tests
+  - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then ./travis-linux.sh; fi
+  
+  # now, actually install the module
   - npm install
   
 script:
