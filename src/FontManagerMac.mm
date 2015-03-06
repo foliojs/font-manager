@@ -81,6 +81,9 @@ ResultSet *getAvailableFonts() {
     CTFontDescriptorRef match = (CTFontDescriptorRef) m;
     results->push_back(createFontDescriptor(match));
   }
+
+  CTFontDescriptorRef lastResort = CTFontDescriptorCreateWithNameAndSize(CFSTR("LastResort"), 0);
+  results->push_back(createFontDescriptor(lastResort));
   
   [matches release];
   return results;
