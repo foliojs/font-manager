@@ -1,6 +1,6 @@
 {
-  "name": "font-manager",
-  "version": "0.1.0",
+  "name": "font-manager-nw",
+  "version": "0.2.0",
   "description": "Provides access to the system font catalog",
   "main": "build/Release/fontmanager",
   "dependencies": {
