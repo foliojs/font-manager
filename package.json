@@ -14,7 +14,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "mocha",
+    "test": "cd test && nw .",
     "install": "nw-gyp configure --target=0.12.3 && nw-gyp build"
   },
   "repository": {
