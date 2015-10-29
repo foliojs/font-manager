@@ -7,9 +7,6 @@
     "nan": "~1.5.1",
     "nw-gyp": "^0.12.4"
   },
-  "devDependencies": {
-    "mocha": "*"
-  },
   "directories": {
     "test": "test"
   },
