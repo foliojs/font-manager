@@ -1,7 +1,7 @@
 {
   "name": "font-manager-nw",
   "version": "0.2.0",
-  "description": "Provides access to the system font catalog",
+  "description": "Provides access to the system font catalog using nw.js",
   "main": "build/Release/fontmanager",
   "dependencies": {
     "nan": "~1.5.1"
@@ -11,11 +11,11 @@
   },
   "scripts": {
     "test": "cd test && nw .",
-    "install": "nw-gyp configure --target=0.12.3 && nw-gyp build"
+    "install": "nw-gyp --target=0.12.3 configure && nw-gyp build"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/devongovett/font-manager.git"
+    "url": "https://github.com/rBurgett/font-manager-nw.git"
   },
   "keywords": [
     "font",
