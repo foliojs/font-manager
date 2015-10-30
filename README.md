@@ -1,6 +1,6 @@
 # font-manager-nw
 
-A C++ module for NW.js (formerly Node Webkit) providing access to the system font catalog. This is a fork of the great [font-manager](https://github.com/devongovett/font-manager) package by [Devon Govett](https://github.com/devongovett). But this version has been retooled to work with NW.
+A C++ module for NW.js (formerly Node Webkit) providing access to the system font catalog. This is a fork of the great [font-manager](https://github.com/devongovett/font-manager) package by [Devon Govett](https://github.com/devongovett). But this version has been retooled to work with NW. If something is not working, please file an issue and/or issue a pull request. Thanks!
 
 ## Features
 
