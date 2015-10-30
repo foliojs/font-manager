@@ -26,10 +26,16 @@
     "enumerate"
   ],
   "author": "Devon Govett <devongovett@gmail.com>",
+  "maintainers": [
+    {
+      "name": "Ryan Burgett",
+      "email": "ryan@burgettweb.net"
+    }
+  ],
   "license": "MIT",
   "gypfile": true,
   "bugs": {
-    "url": "https://github.com/devongovett/font-manager/issues"
+    "url": "https://github.com/rBurgett/font-manager-nw/issues"
   },
-  "homepage": "https://github.com/devongovett/font-manager"
+  "homepage": "https://github.com/rBurgett/font-manager-nw"
 }
