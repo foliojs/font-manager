@@ -1,8 +1,6 @@
-[![Build Status](https://travis-ci.org/devongovett/font-manager.svg)](https://travis-ci.org/devongovett/font-manager)
-
 # font-manager
 
-A C++ module for Node.js providing access to the system font catalog.
+A C++ module for NW.js (formerly Node Webkit) providing access to the system font catalog. This is a fork of the great [font-manager](https://github.com/devongovett/font-manager) package by [Devon Govett](https://github.com/devongovett). But this version has been retooled to work with NW.
 
 ## Features
 
@@ -16,22 +14,22 @@ A C++ module for Node.js providing access to the system font catalog.
 * Windows 7 and later supported via [DirectWrite](http://msdn.microsoft.com/en-us/library/windows/desktop/dd368038(v=vs.85).aspx)
 * Linux supported via [fontconfig](http://www.freedesktop.org/software/fontconfig)
 
+## Dependencies
+* [nw.js](https://github.com/nwjs/nw.js) - NW (formerly Node Webkit): `npm install -g nw`
+* [nw-gyp](https://github.com/nwjs/nw-gyp) - native addon build tool for node-webkit
+* On Linux, you also may need to install the `libfontconfig-dev` package: `sudo apt-get install libfontconfig-dev`
+
 ## Installation
+Install via npm:
 
-Installation of the `font-manager` module is via npm:
-
-    npm install font-manager
-
-On Linux, you also may need to install the `libfontconfig-dev` package, for example:
-
-    sudo apt-get install libfontconfig-dev
+`npm install font-manager`
 
 ## API
 
 You load the `font-manager` module using `require` as with all Node modules:
 
 ```javascript
-var fontManager = require('font-manager');
+var fontManager = require('font-manager-nw');
 ```
 
 All of the methods exported by `font-manager` have both synchronous and asynchronous versions available.
