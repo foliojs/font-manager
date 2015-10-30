@@ -22,7 +22,9 @@ A C++ module for NW.js (formerly Node Webkit) providing access to the system fon
 ## Installation
 Install via npm:
 
-`npm install font-manager-nw`
+```
+npm install font-manager-nw
+```
 
 ## API
 
@@ -67,8 +69,8 @@ var fonts = fontManager.getAvailableFontsSync();
 
 ### findFonts(fontDescriptor)
 
-Returns an array of [font descriptors](#font-descriptor) matching a query 
-[font descriptor](#font-descriptor). 
+Returns an array of [font descriptors](#font-descriptor) matching a query
+[font descriptor](#font-descriptor).
 The returned array may be empty if no fonts match the font descriptor.
 
 ```javascript
@@ -101,7 +103,7 @@ var fonts = fontManager.findFontsSync({ family: 'Arial' });
 
 Returns a single [font descriptors](#font-descriptor) matching a query
 [font descriptors](#font-descriptor) as well as possible. This method
-always returns a result (never `null`), so sometimes the output will not 
+always returns a result (never `null`), so sometimes the output will not
 exactly match the input font descriptor if not all input parameters
 could be met.
 
@@ -154,7 +156,7 @@ var font = fontManager.substituteFontSync('TimesNewRomanPSMT', '汉字');
 
 Font descriptors are normal JavaScript objects that describe characteristics of
 a font.  They are passed to the `findFonts` and `findFont` methods and returned by
-all of the methods.  Any combination of the fields documented below can be used to 
+all of the methods.  Any combination of the fields documented below can be used to
 find fonts, but all methods return full font descriptors.
 
 Name             | Type    | Description
