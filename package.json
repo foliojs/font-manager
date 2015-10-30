@@ -4,8 +4,7 @@
   "description": "Provides access to the system font catalog",
   "main": "build/Release/fontmanager",
   "dependencies": {
-    "nan": "~1.5.1",
-    "nw-gyp": "^0.12.4"
+    "nan": "~1.5.1"
   },
   "directories": {
     "test": "test"
