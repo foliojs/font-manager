@@ -2,7 +2,15 @@
 env:
   - NODE_VERSION=0.8
   - NODE_VERSION=0.10
-  - NODE_VERSION=0.11
+  - NODE_VERSION=0.12
+  - NODE_VERSION=4
+  
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    packages:
+    - g++-4.8
 
 os:
   - linux
@@ -22,6 +30,9 @@ before_install:
 install:
   # on linux, install some dependencies and fonts used for tests
   - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then ./travis-linux.sh; fi
+  
+  # Require c++11 support
+  - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then export CXX=g++-4.8; fi
   
   # now, actually install the module
   - npm install
