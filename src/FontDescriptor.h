@@ -110,17 +110,17 @@ public:
   }
   
   Local<Object> toJSObject() {
-    NanEscapableScope();
-    Local<Object> res = NanNew<Object>();
-    res->Set(NanNew<String>("path"), NanNew<String>(path));
-    res->Set(NanNew<String>("postscriptName"), NanNew<String>(postscriptName));
-    res->Set(NanNew<String>("family"), NanNew<String>(family));
-    res->Set(NanNew<String>("style"), NanNew<String>(style));
-    res->Set(NanNew<String>("weight"), NanNew<Number>(weight));
-    res->Set(NanNew<String>("width"), NanNew<Number>(width));
-    res->Set(NanNew<String>("italic"), NanNew<v8::Boolean>(italic));
-    res->Set(NanNew<String>("monospace"), NanNew<v8::Boolean>(monospace));
-    return NanEscapeScope(res);
+    Nan::EscapableHandleScope scope;
+    Local<Object> res = Nan::New<Object>();
+    res->Set(Nan::New<String>("path").ToLocalChecked(), Nan::New<String>(path).ToLocalChecked());
+    res->Set(Nan::New<String>("postscriptName").ToLocalChecked(), Nan::New<String>(postscriptName).ToLocalChecked());
+    res->Set(Nan::New<String>("family").ToLocalChecked(), Nan::New<String>(family).ToLocalChecked());
+    res->Set(Nan::New<String>("style").ToLocalChecked(), Nan::New<String>(style).ToLocalChecked());
+    res->Set(Nan::New<String>("weight").ToLocalChecked(), Nan::New<Number>(weight));
+    res->Set(Nan::New<String>("width").ToLocalChecked(), Nan::New<Number>(width));
+    res->Set(Nan::New<String>("italic").ToLocalChecked(), Nan::New<v8::Boolean>(italic));
+    res->Set(Nan::New<String>("monospace").ToLocalChecked(), Nan::New<v8::Boolean>(monospace));
+    return scope.Escape(res);
   }
   
 private:
@@ -134,19 +134,19 @@ private:
   }
   
   char *getString(Local<Object> obj, const char *name) {
-    NanScope();
-    Local<Value> value = obj->Get(NanNew<String>(name));
+    Nan::HandleScope scope;
+    Local<Value> value = obj->Get(Nan::New<String>(name).ToLocalChecked());
     
     if (value->IsString()) {
-      return copyString(*NanUtf8String(value));
+      return copyString(*Nan::Utf8String(value));
     }
   
     return NULL;
   }
   
   int getNumber(Local<Object> obj, const char *name) {
-    NanScope();
-    Local<Value> value = obj->Get(NanNew<String>(name));
+    Nan::HandleScope scope;
+    Local<Value> value = obj->Get(Nan::New<String>(name).ToLocalChecked());
     
     if (value->IsNumber()) {
       return value->Int32Value();
@@ -156,8 +156,8 @@ private:
   }
   
   bool getBool(Local<Object> obj, const char *name) {
-    NanScope();
-    Local<Value> value = obj->Get(NanNew<String>(name));
+    Nan::HandleScope scope;
+    Local<Value> value = obj->Get(Nan::New<String>(name).ToLocalChecked());
     
     if (value->IsBoolean()) {
       return value->BooleanValue();
