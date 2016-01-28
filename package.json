@@ -4,7 +4,10 @@
   "description": "Provides access to the system font catalog using nw.js",
   "main": "build/Release/fontmanager",
   "dependencies": {
-    "nan": "~1.5.1"
+    "nan": "~2.1.0"
+  },
+  "devDependencies": {
+    "mocha": "*"
   },
   "directories": {
     "test": "test"
