@@ -49,7 +49,7 @@ unsigned int getLocaleIndex(IDWriteLocalizedStrings *strings) {
 
 // gets a localized string for a font
 char *getString(IDWriteFont *font, DWRITE_INFORMATIONAL_STRING_ID string_id) {
-  char *res = "";
+  char *res = NULL;
   IDWriteLocalizedStrings *strings = NULL;
 
   BOOL exists = false;
@@ -59,9 +59,8 @@ char *getString(IDWriteFont *font, DWRITE_INFORMATIONAL_STRING_ID string_id) {
     &exists
   ));
 
-  unsigned int index = getLocaleIndex(strings);
-
   if (exists) {
+    unsigned int index = getLocaleIndex(strings);
     unsigned int len = 0;
     WCHAR *str = NULL;
 
@@ -73,9 +72,15 @@ char *getString(IDWriteFont *font, DWRITE_INFORMATIONAL_STRING_ID string_id) {
     // convert to utf8
     res = utf16ToUtf8(str);
     delete str;
+    
+    strings->Release();
   }
-
-  strings->Release();
+  
+  if (!res) {
+    res = new char[1];
+    res[0] = '\0';
+  }
+  
   return res;
 }
 
