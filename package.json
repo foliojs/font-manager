@@ -4,7 +4,7 @@
   "description": "Provides access to the system font catalog",
   "main": "build/Release/fontmanager",
   "dependencies": {
-    "nan": "~2.1.0"
+    "nan": "~2.2.0"
   },
   "devDependencies": {
     "mocha": "*"
