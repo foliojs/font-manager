@@ -2,7 +2,7 @@
   "name": "font-manager",
   "version": "0.2.2",
   "description": "Provides access to the system font catalog",
-  "main": "build/Release/fontmanager",
+  "main": "build/Release/fontmanager.node",
   "dependencies": {
     "nan": "~2.2.0"
   },
