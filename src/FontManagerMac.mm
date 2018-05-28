@@ -78,6 +78,11 @@ ResultSet *getAvailableFonts() {
   ResultSet *results = new ResultSet();
   
   for (id m in matches) {
+    NSString *family = (NSString *) CTFontDescriptorCopyAttribute((CTFontDescriptorRef) m, kCTFontFamilyNameAttribute);
+    if (family == NULL) {
+      continue;
+    }
+    
     CTFontDescriptorRef match = (CTFontDescriptorRef) m;
     results->push_back(createFontDescriptor(match));
   }
@@ -167,6 +172,11 @@ ResultSet *findFonts(FontDescriptor *desc) {
   }];
   
   for (id m in sorted) {
+    NSString *family = (NSString *) CTFontDescriptorCopyAttribute((CTFontDescriptorRef) m, kCTFontFamilyNameAttribute);
+    if (family == NULL) {
+      continue;
+    }
+    
     CTFontDescriptorRef match = (CTFontDescriptorRef) m;
     int mb = metricForMatch((CTFontDescriptorRef) m, desc);
     
@@ -186,6 +196,11 @@ CTFontDescriptorRef findBest(FontDescriptor *desc, NSArray *matches) {
   int bestMetric = INT_MAX;
 
   for (id m in matches) {
+    NSString *family = (NSString *) CTFontDescriptorCopyAttribute((CTFontDescriptorRef) m, kCTFontFamilyNameAttribute);
+    if (family == NULL) {
+      continue;
+    }
+    
     int metric = metricForMatch((CTFontDescriptorRef) m, desc);
 
     if (metric < bestMetric) {
