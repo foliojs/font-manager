@@ -2,9 +2,9 @@ os: Windows Server 2012
 environment:
   VisualStudioVersion: 11.0
   matrix:
-    - nodejs_version: "0.8"
-    - nodejs_version: "0.10"
-    - nodejs_version: "0.11"
+    - nodejs_version: "6"
+    - nodejs_version: "8"
+    - nodejs_version: "10"
 
 install:
   - ps: Update-NodeJsInstallation (Get-NodeJsLatestBuild $env:nodejs_version)
