@@ -122,9 +122,14 @@ FontDescriptor *resultFromFont(IDWriteFont *font) {
       char *family = getString(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES);
       char *style = getString(font, DWRITE_INFORMATIONAL_STRING_WIN32_SUBFAMILY_NAMES);
 
+      bool monospace = false;
       // this method requires windows 7, so we need to cast to an IDWriteFontFace1
-      IDWriteFontFace1 *face1 = static_cast<IDWriteFontFace1 *>(face);
-      bool monospace = face1->IsMonospacedFont() == TRUE;
+
+      IDWriteFontFace1 *face1;
+      HRESULT hr = face->QueryInterface(__uuidof(IDWriteFontFace1), (void **)&face1);
+      if (SUCCEEDED(hr)) {
+        monospace = face1->IsMonospacedFont() == TRUE;
+      }
 
       res = new FontDescriptor(
         psName,
