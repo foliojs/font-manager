@@ -2,7 +2,7 @@
   "name": "font-manager",
   "version": "0.3.0",
   "description": "Provides access to the system font catalog",
-  "main": "build/Release/fontmanager",
+  "main": "index.js",
   "dependencies": {
     "nan": ">=2.10.0"
   },
@@ -13,6 +13,8 @@
     "test": "test"
   },
   "scripts": {
+    "rebuild-debug": "node-gyp rebuild --debug",
+    "rebuild-release": "node-gyp rebuild",
     "test": "mocha"
   },
   "repository": {
