@@ -8,10 +8,10 @@
 using namespace v8;
 
 // these functions are implemented by the platform
-ResultSet *getAvailableFonts();
-ResultSet *findFonts(FontDescriptor *);
-FontDescriptor *findFont(FontDescriptor *);
-FontDescriptor *substituteFont(char *, char *);
+long getAvailableFonts(ResultSet **);
+long findFonts(ResultSet **, FontDescriptor *);
+long findFont(FontDescriptor **, FontDescriptor *);
+long substituteFont(FontDescriptor **, char *, char *);
 
 // converts a ResultSet to a JavaScript array
 Local<Array> collectResults(ResultSet *results) {
@@ -47,6 +47,7 @@ struct AsyncRequest {
   char *substitutionString; // ditto
   FontDescriptor *result;   // for functions with a single result
   ResultSet *results;       // for functions with multiple results
+  long error;               // result/results is defined if error == 0
   Nan::Callback *callback;  // the actual JS callback to call when we are done
 
   AsyncRequest(Local<Value> v) {
@@ -80,23 +81,25 @@ void asyncCallback(uv_work_t *work) {
   Nan::HandleScope scope;
   AsyncRequest *req = (AsyncRequest *) work->data;
   Nan::AsyncResource async("asyncCallback");
-  Local<Value> info[1];
+  Local<Value> info[2] = {Nan::Null(), Nan::Null()};
 
-  if (req->results) {
-    info[0] = collectResults(req->results);
-  } else if (req->result) {
-    info[0] = wrapResult(req->result);
+  if (req->error == 0) {
+    if (req->results) {
+      info[1] = collectResults(req->results);
+    } else if (req->result) {
+      info[1] = wrapResult(req->result);
+    }
   } else {
-    info[0] = Nan::Null();
+    info[0] = Nan::ErrnoException(req->error);
   }
 
-  req->callback->Call(1, info, &async);
+  req->callback->Call(2, info, &async);
   delete req;
 }
 
 void getAvailableFontsAsync(uv_work_t *work) {
   AsyncRequest *req = (AsyncRequest *) work->data;
-  req->results = getAvailableFonts();
+  req->error = getAvailableFonts(&req->results);
 }
 
 template<bool async>
@@ -110,13 +113,19 @@ NAN_METHOD(getAvailableFonts) {
 
     return;
   } else {
-    info.GetReturnValue().Set(collectResults(getAvailableFonts()));
+    ResultSet *results = NULL;
+    long error = getAvailableFonts(&results);
+    if (error != 0) {
+      return Nan::ThrowError(Nan::ErrnoException(error));
+    }
+
+    info.GetReturnValue().Set(collectResults(results));
   }
 }
 
 void findFontsAsync(uv_work_t *work) {
   AsyncRequest *req = (AsyncRequest *) work->data;
-  req->results = findFonts(req->desc);
+  req->error = findFonts(&req->results, req->desc);
 }
 
 template<bool async>
@@ -137,7 +146,13 @@ NAN_METHOD(findFonts) {
 
     return;
   } else {
-    Local<Object> res = collectResults(findFonts(descriptor));
+    ResultSet *results = NULL;
+    long error = findFonts(&results, descriptor);
+    if (error != 0) {
+      return Nan::ThrowError(Nan::ErrnoException(error));
+    }
+
+    Local<Object> res = collectResults(results);
     delete descriptor;
     info.GetReturnValue().Set(res);
   }
@@ -145,7 +160,7 @@ NAN_METHOD(findFonts) {
 
 void findFontAsync(uv_work_t *work) {
   AsyncRequest *req = (AsyncRequest *) work->data;
-  req->result = findFont(req->desc);
+  req->error = findFont(&req->result, req->desc);
 }
 
 template<bool async>
@@ -166,7 +181,13 @@ NAN_METHOD(findFont) {
 
     return;
   } else {
-    Local<Value> res = wrapResult(findFont(descriptor));
+    FontDescriptor *result = NULL;
+    long error = findFont(&result, descriptor);
+    if (error != 0) {
+      return Nan::ThrowError(Nan::ErrnoException(error));
+    }
+
+    Local<Value> res = wrapResult(result);
     delete descriptor;
     info.GetReturnValue().Set(res);
   }
@@ -174,7 +195,7 @@ NAN_METHOD(findFont) {
 
 void substituteFontAsync(uv_work_t *work) {
   AsyncRequest *req = (AsyncRequest *) work->data;
-  req->result = substituteFont(req->postscriptName, req->substitutionString);
+  req->error = substituteFont(&req->result, req->postscriptName, req->substitutionString);
 }
 
 template<bool async>
@@ -206,7 +227,13 @@ NAN_METHOD(substituteFont) {
 
     return;
   } else {
-    info.GetReturnValue().Set(wrapResult(substituteFont(*postscriptName, *substitutionString)));
+    FontDescriptor *result = NULL;
+    long error = substituteFont(&result, *postscriptName, *substitutionString);
+    if (error != 0) {
+      return Nan::ThrowError(Nan::ErrnoException(error));
+    }
+
+    info.GetReturnValue().Set(wrapResult(result));
   }
 }
 
