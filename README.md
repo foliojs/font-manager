@@ -1,8 +1,6 @@
-[![Build Status](https://travis-ci.org/devongovett/font-manager.svg)](https://travis-ci.org/devongovett/font-manager)
+# font-scanner
 
-# font-manager
-
-A C++ module for Node.js providing access to the system font catalog.
+A C++ module for Node.js providing access to the system font catalog. Forked from https://github.com/foliojs/font-manager
 
 ## Features
 
@@ -18,9 +16,9 @@ A C++ module for Node.js providing access to the system font catalog.
 
 ## Installation
 
-Installation of the `font-manager` module is via npm:
+Installation of the `font-scanner` module is via npm:
 
-    npm install font-manager
+    npm install --save-dev font-scanner
 
 On Linux, you also may need to install the `libfontconfig-dev` package, for example:
 
@@ -28,13 +26,13 @@ On Linux, you also may need to install the `libfontconfig-dev` package, for exam
 
 ## API
 
-You load the `font-manager` module using `require` as with all Node modules:
+You load the `font-scanner` module using `require` as with all Node modules:
 
 ```javascript
-var fontManager = require('font-manager');
+var fontManager = require('font-scanner');
 ```
 
-All of the methods exported by `font-manager` have both synchronous and asynchronous versions available.
+All of the methods exported by `font-scanner` have both synchronous and asynchronous versions available.
 You should generally prefer the asynchronous version as it will allow your program to continue doing other
 processing while a request for fonts is processing in the background, which may be expensive depending on
 the platform APIs that are available.
@@ -50,7 +48,7 @@ Returns an array of all [font descriptors](#font-descriptor) available on the sy
 
 ```javascript
 // asynchronous API
-fontManager.getAvailableFonts(function(fonts) { ... });
+fontManager.getAvailableFonts().then((fonts) => { ... });
 
 // synchronous API
 var fonts = fontManager.getAvailableFontsSync();
@@ -69,13 +67,13 @@ var fonts = fontManager.getAvailableFontsSync();
 
 ### findFonts(fontDescriptor)
 
-Returns an array of [font descriptors](#font-descriptor) matching a query 
-[font descriptor](#font-descriptor). 
+Returns an array of [font descriptors](#font-descriptor) matching a query
+[font descriptor](#font-descriptor).
 The returned array may be empty if no fonts match the font descriptor.
 
 ```javascript
 // asynchronous API
-fontManager.findFonts({ family: 'Arial' }, function(fonts) { ... });
+fontManager.findFonts({ family: 'Arial' }).then((fonts) => { ... });
 
 // synchronous API
 var fonts = fontManager.findFontsSync({ family: 'Arial' });
@@ -103,13 +101,13 @@ var fonts = fontManager.findFontsSync({ family: 'Arial' });
 
 Returns a single [font descriptors](#font-descriptor) matching a query
 [font descriptors](#font-descriptor) as well as possible. This method
-always returns a result (never `null`), so sometimes the output will not 
+always returns a result (never `null`), so sometimes the output will not
 exactly match the input font descriptor if not all input parameters
 could be met.
 
 ```javascript
 // asynchronous API
-fontManager.findFont({ family: 'Arial', weight: 700 }, function(font) { ... });
+fontManager.findFont({ family: 'Arial', weight: 700 }).then((font) => { ... });
 
 // synchronous API
 var font = fontManager.findFontSync({ family: 'Arial', weight: 700 });
@@ -126,6 +124,7 @@ var font = fontManager.findFontSync({ family: 'Arial', weight: 700 });
 ```
 
 ### substituteFont(postscriptName, text)
+**NOTE: This seems to be producing unstable results on Windows at the moment when the test suite is run. Be cautious.**
 
 Substitutes the font with the given `postscriptName` with another font
 that contains the characters in `text`.  If a font matching `postscriptName`
@@ -136,7 +135,7 @@ in `text`, it is not replaced and the font descriptor for the original font is r
 
 ```javascript
 // asynchronous API
-fontManager.substituteFont('TimesNewRomanPSMT', '汉字', function(font) { ... });
+fontManager.substituteFont('TimesNewRomanPSMT', '汉字').then((font) => { ... });
 
 // synchronous API
 var font = fontManager.substituteFontSync('TimesNewRomanPSMT', '汉字');
@@ -156,7 +155,7 @@ var font = fontManager.substituteFontSync('TimesNewRomanPSMT', '汉字');
 
 Font descriptors are normal JavaScript objects that describe characteristics of
 a font.  They are passed to the `findFonts` and `findFont` methods and returned by
-all of the methods.  Any combination of the fields documented below can be used to 
+all of the methods.  Any combination of the fields documented below can be used to
 find fonts, but all methods return full font descriptors.
 
 Name             | Type    | Description

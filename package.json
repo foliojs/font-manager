@@ -1,6 +1,6 @@
 {
-  "name": "font-manager",
-  "version": "0.3.0",
+  "name": "font-scanner",
+  "version": "0.1.0",
   "description": "Provides access to the system font catalog",
   "main": "index.js",
   "dependencies": {
@@ -19,7 +19,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/devongovett/font-manager.git"
+    "url": "https://github.com/axosoft/font-scanner.git"
   },
   "keywords": [
     "font",
@@ -28,11 +28,15 @@
     "substitute",
     "enumerate"
   ],
-  "author": "Devon Govett <devongovett@gmail.com>",
+  "contributors": [
+    "Devon Govett <devongovett@gmail.com>",
+    "Tyler Ang-Wanek <tylera@axosoft.com>",
+    "Jordan Wallet <jordanw@axosoft.com>",
+    "Jake Krammer <jakek@axosoft.com>"
+  ],
   "license": "MIT",
-  "gypfile": true,
   "bugs": {
-    "url": "https://github.com/devongovett/font-manager/issues"
+    "url": "https://github.com/axosoft/font-scanner/issues"
   },
-  "homepage": "https://github.com/devongovett/font-manager"
+  "homepage": "https://github.com/axosoft/font-scanner"
 }
