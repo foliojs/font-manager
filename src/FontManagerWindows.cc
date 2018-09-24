@@ -127,7 +127,7 @@ long resultFromFont(FontDescriptor **res, IDWriteFont *font) {
 
       bool monospace = false;
       // this method requires windows 7, so we need to cast to an IDWriteFontFace1
-      IDWriteFontFace1 *face1
+      IDWriteFontFace1 *face1;
       HRESULT hr = face->QueryInterface(__uuidof(IDWriteFontFace1), (void **)&face1);
       if (SUCCEEDED(hr)) {
         monospace = face1->IsMonospacedFont() == TRUE;
