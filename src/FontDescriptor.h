@@ -112,10 +112,23 @@ public:
   Local<Object> toJSObject() {
     Nan::EscapableHandleScope scope;
     Local<Object> res = Nan::New<Object>();
-    res->Set(Nan::New<String>("path").ToLocalChecked(), Nan::New<String>(path).ToLocalChecked());
-    res->Set(Nan::New<String>("postscriptName").ToLocalChecked(), Nan::New<String>(postscriptName).ToLocalChecked());
-    res->Set(Nan::New<String>("family").ToLocalChecked(), Nan::New<String>(family).ToLocalChecked());
-    res->Set(Nan::New<String>("style").ToLocalChecked(), Nan::New<String>(style).ToLocalChecked());
+    
+    if (path) {
+      res->Set(Nan::New<String>("path").ToLocalChecked(), Nan::New<String>(path).ToLocalChecked());
+    }
+
+    if (postscriptName) {
+      res->Set(Nan::New<String>("postscriptName").ToLocalChecked(), Nan::New<String>(postscriptName).ToLocalChecked());
+    }
+
+    if (family) {
+      res->Set(Nan::New<String>("family").ToLocalChecked(), Nan::New<String>(family).ToLocalChecked());
+    }
+
+    if (style) {
+      res->Set(Nan::New<String>("style").ToLocalChecked(), Nan::New<String>(style).ToLocalChecked());
+    }
+
     res->Set(Nan::New<String>("weight").ToLocalChecked(), Nan::New<Number>(weight));
     res->Set(Nan::New<String>("width").ToLocalChecked(), Nan::New<Number>(width));
     res->Set(Nan::New<String>("italic").ToLocalChecked(), Nan::New<v8::Boolean>(italic));
