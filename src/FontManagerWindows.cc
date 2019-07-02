@@ -123,7 +123,7 @@ FontDescriptor *resultFromFont(IDWriteFont *font) {
       char *family = getString(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES);
       char *style = getString(font, DWRITE_INFORMATIONAL_STRING_WIN32_SUBFAMILY_NAMES);
 
-      std::string str1 = str::string(family) + "test";
+      //std::string str1 = str::string(family) + "test";
 
       // this method requires windows 7, so we need to cast to an IDWriteFontFace1
       IDWriteFontFace1 *face1 = static_cast<IDWriteFontFace1 *>(face);
@@ -132,7 +132,7 @@ FontDescriptor *resultFromFont(IDWriteFont *font) {
       res = new FontDescriptor(
         psName,
         postscriptName,
-        str1,//family,
+        postscriptName,
         style,
         (FontWeight) font->GetWeight(),
         (FontWidth) font->GetStretch(),
