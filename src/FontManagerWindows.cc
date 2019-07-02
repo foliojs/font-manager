@@ -3,6 +3,7 @@
 #include <dwrite.h>
 #include <dwrite_1.h>
 #include <unordered_set>
+#include <string>
 
 // throws a JS error when there is some exception in DirectWrite
 #define HR(hr) \
@@ -122,6 +123,8 @@ FontDescriptor *resultFromFont(IDWriteFont *font) {
       char *family = getString(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES);
       char *style = getString(font, DWRITE_INFORMATIONAL_STRING_WIN32_SUBFAMILY_NAMES);
 
+      std::string str1 = str::string(family) + "test";
+
       // this method requires windows 7, so we need to cast to an IDWriteFontFace1
       IDWriteFontFace1 *face1 = static_cast<IDWriteFontFace1 *>(face);
       bool monospace = face1->IsMonospacedFont() == TRUE;
@@ -129,7 +132,7 @@ FontDescriptor *resultFromFont(IDWriteFont *font) {
       res = new FontDescriptor(
         psName,
         postscriptName,
-        family,
+        str1,//family,
         style,
         (FontWeight) font->GetWeight(),
         (FontWidth) font->GetStretch(),
