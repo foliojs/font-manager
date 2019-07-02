@@ -122,15 +122,6 @@ FontDescriptor *resultFromFont(IDWriteFont *font) {
       char *family = getString(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES);
       char *style = getString(font, DWRITE_INFORMATIONAL_STRING_WIN32_SUBFAMILY_NAMES);
 
-      //std::string str1 = str::string(family) + "test";
-      wchar_t localeName[LOCALE_NAME_MAX_LENGTH];
-
-      // Get the default locale for this user.
-      int success = GetUserDefaultLocaleName(localeName, LOCALE_NAME_MAX_LENGTH);
-
-      std::wstring ws(localeName);
-      std::string str(ws.begin(), ws.end());
-
       // this method requires windows 7, so we need to cast to an IDWriteFontFace1
       IDWriteFontFace1 *face1 = static_cast<IDWriteFontFace1 *>(face);
       bool monospace = face1->IsMonospacedFont() == TRUE;
@@ -138,7 +129,7 @@ FontDescriptor *resultFromFont(IDWriteFont *font) {
       res = new FontDescriptor(
         psName,
         postscriptName,
-        str.c_str(),
+        family,
         style,
         (FontWeight) font->GetWeight(),
         (FontWidth) font->GetStretch(),
