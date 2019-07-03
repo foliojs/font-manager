@@ -3,7 +3,6 @@
 #include <dwrite.h>
 #include <dwrite_1.h>
 #include <unordered_set>
-#include <string>
 
 // throws a JS error when there is some exception in DirectWrite
 #define HR(hr) \
