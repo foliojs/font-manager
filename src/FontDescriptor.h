@@ -40,6 +40,7 @@ public:
   const char *path;
   const char *postscriptName;
   const char *family;
+  const char *localizedName;
   const char *style;
   FontWeight weight;
   FontWidth width;
@@ -50,6 +51,7 @@ public:
     path = NULL;
     postscriptName = getString(obj, "postscriptName");
     family = getString(obj, "family");
+    localizedName = getString(obj, "localizedName");
     style = getString(obj, "style");
     weight = (FontWeight) getNumber(obj, "weight");
     width = (FontWidth) getNumber(obj, "width");
@@ -61,6 +63,7 @@ public:
     path = NULL;
     postscriptName = NULL;
     family = NULL;
+    localizedName = NULL;
     style = NULL;
     weight = FontWeightUndefined;
     width = FontWidthUndefined;
@@ -68,11 +71,12 @@ public:
     monospace = false;
   }
   
-  FontDescriptor(const char *path, const char *postscriptName, const char *family, const char *style, 
+  FontDescriptor(const char *path, const char *postscriptName, const char *family, const char *localizedName, const char *style, 
                  FontWeight weight, FontWidth width, bool italic, bool monospace) {
     this->path = copyString(path);
     this->postscriptName = copyString(postscriptName);
     this->family = copyString(family);
+    this->localizedName = copyString(localizedName);
     this->style = copyString(style);
     this->weight = weight;
     this->width = width;
@@ -84,6 +88,7 @@ public:
     path = copyString(desc->path);
     postscriptName = copyString(desc->postscriptName);
     family = copyString(desc->family);
+    localizedName = copyString(desc->localizedName);
     style = copyString(desc->style);
     weight = desc->weight;
     width = desc->width;
@@ -100,12 +105,16 @@ public:
     
     if (family)
       delete family;
+
+    if (localizedName)
+      delete localizedName;
     
     if (style)
       delete style;
     
     postscriptName = NULL;
     family = NULL;
+    localizedName = NULL;
     style = NULL;
   }
   
@@ -115,6 +124,7 @@ public:
     res->Set(Nan::New<String>("path").ToLocalChecked(), Nan::New<String>(path).ToLocalChecked());
     res->Set(Nan::New<String>("postscriptName").ToLocalChecked(), Nan::New<String>(postscriptName).ToLocalChecked());
     res->Set(Nan::New<String>("family").ToLocalChecked(), Nan::New<String>(family).ToLocalChecked());
+    res->Set(Nan::New<String>("localizedName").ToLocalChecked(), Nan::New<String>(localizedName).ToLocalChecked());
     res->Set(Nan::New<String>("style").ToLocalChecked(), Nan::New<String>(style).ToLocalChecked());
     res->Set(Nan::New<String>("weight").ToLocalChecked(), Nan::New<Number>(weight));
     res->Set(Nan::New<String>("width").ToLocalChecked(), Nan::New<Number>(width));

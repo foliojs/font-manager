@@ -120,6 +120,7 @@ FontDescriptor *resultFromFont(IDWriteFont *font) {
       char *psName = utf16ToUtf8(name);
       char *postscriptName = getString(font, DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_NAME);
       char *family = getString(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES);
+      char *localizedName = getString(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES);
       char *style = getString(font, DWRITE_INFORMATIONAL_STRING_WIN32_SUBFAMILY_NAMES);
 
       // this method requires windows 7, so we need to cast to an IDWriteFontFace1
@@ -130,6 +131,7 @@ FontDescriptor *resultFromFont(IDWriteFont *font) {
         psName,
         postscriptName,
         family,
+        localizedName,
         style,
         (FontWeight) font->GetWeight(),
         (FontWidth) font->GetStretch(),
@@ -141,6 +143,7 @@ FontDescriptor *resultFromFont(IDWriteFont *font) {
       delete name;
       delete postscriptName;
       delete family;
+      delete localizedName;
       delete style;
       fileLoader->Release();
     }

@@ -58,8 +58,8 @@ static int convertWidth(float unit) {
 FontDescriptor *createFontDescriptor(CTFontDescriptorRef descriptor) {
   NSURL *url = (NSURL *) CTFontDescriptorCopyAttribute(descriptor, kCTFontURLAttribute);
   NSString *psName = (NSString *) CTFontDescriptorCopyAttribute(descriptor, kCTFontNameAttribute);  
-  //NSString *family = (NSString *) CTFontDescriptorCopyAttribute(descriptor, kCTFontFamilyNameAttribute);
-  NSString *family = getLocalizedAttribute(descriptor, kCTFontFamilyNameAttribute, NULL);
+  NSString *family = (NSString *) CTFontDescriptorCopyAttribute(descriptor, kCTFontFamilyNameAttribute);
+  NSString *localizedName = getLocalizedAttribute(descriptor, kCTFontFamilyNameAttribute, NULL);
   NSString *style = (NSString *) CTFontDescriptorCopyAttribute(descriptor, kCTFontStyleNameAttribute);
   
   NSDictionary *traits = (NSDictionary *) CTFontDescriptorCopyAttribute(descriptor, kCTFontTraitsAttribute);
@@ -76,6 +76,7 @@ FontDescriptor *createFontDescriptor(CTFontDescriptorRef descriptor) {
     [[url path] UTF8String],
     [psName UTF8String],
     [family UTF8String],
+    [localizedName UTF8String],
     [style UTF8String],
     weight,
     width,
@@ -86,6 +87,7 @@ FontDescriptor *createFontDescriptor(CTFontDescriptorRef descriptor) {
   [url release];
   [psName release];
   [family release];
+  [localizedName release];
   [style release];
   [traits release];
   return res;
@@ -128,6 +130,8 @@ CTFontDescriptorRef getFontDescriptor(FontDescriptor *desc) {
     NSString *family = [NSString stringWithUTF8String:desc->family];
     attrs[(id)kCTFontFamilyNameAttribute] = family;
   }
+
+  // localizedName は CTFontDescriptor には不要
 
   if (desc->style) {
     NSString *style = [NSString stringWithUTF8String:desc->style];

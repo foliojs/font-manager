@@ -119,6 +119,7 @@ FontDescriptor *createFontDescriptor(FcPattern *pattern) {
     (char *) path,
     (char *) psName,
     (char *) family,
+    (char *) family,
     (char *) style,
     convertWeight(weight),
     convertWidth(width),
