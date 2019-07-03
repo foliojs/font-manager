@@ -2,6 +2,28 @@
 #include <CoreText/CoreText.h>
 #include "FontDescriptor.h"
 
+// get localized string
+NSString* CFStringToUtf8String(CFStringRef str)
+{
+  if(str == NULL){
+    return NULL;
+  }
+  CFIndex max = CFStringGetMaximumSizeForEncoding(CFStringGetLength(str), kCFStringEncodingUTF8) + 1;
+  char* buffer = (char*)malloc(max);
+  if (CFStringGetCString(str, buffer, max, kCFStringEncodingUTF8)) {
+      return [NSString stringWithUTF8String: buffer];;
+  }
+  free(buffer);
+  return NULL;
+}
+NSString* getLocalizedAttribute(CTFontDescriptorRef ref, CFStringRef attr, CFStringRef *localized) {
+  CFTypeRef value = CTFontDescriptorCopyLocalizedAttribute(ref, attr, localized);
+  if(value && (CFStringRef)value) {
+    return CFStringToUtf8String((CFStringRef)value);
+  }
+  return (NSString *) CTFontDescriptorCopyAttribute(ref, attr);
+}
+
 // converts a CoreText weight (-1 to +1) to a standard weight (100 to 900)
 static int convertWeight(float weight) {
   if (weight <= -0.8f)
@@ -36,7 +58,8 @@ static int convertWidth(float unit) {
 FontDescriptor *createFontDescriptor(CTFontDescriptorRef descriptor) {
   NSURL *url = (NSURL *) CTFontDescriptorCopyAttribute(descriptor, kCTFontURLAttribute);
   NSString *psName = (NSString *) CTFontDescriptorCopyAttribute(descriptor, kCTFontNameAttribute);  
-  NSString *family = (NSString *) CTFontDescriptorCopyAttribute(descriptor, kCTFontFamilyNameAttribute);
+  //NSString *family = (NSString *) CTFontDescriptorCopyAttribute(descriptor, kCTFontFamilyNameAttribute);
+  NSString *family = getLocalizedAttribute(descriptor, kCTFontFamilyNameAttribute, NULL);
   NSString *style = (NSString *) CTFontDescriptorCopyAttribute(descriptor, kCTFontStyleNameAttribute);
   
   NSDictionary *traits = (NSDictionary *) CTFontDescriptorCopyAttribute(descriptor, kCTFontTraitsAttribute);
