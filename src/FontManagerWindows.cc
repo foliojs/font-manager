@@ -47,8 +47,28 @@ unsigned int getLocaleIndex(IDWriteLocalizedStrings *strings) {
   return index;
 }
 
+unsigned int getLocaleIndexByName(IDWriteLocalizedStrings *strings, wchar_t* localName) {
+  unsigned int index = 0;
+  BOOL exists = false;
+
+  // If the default locale is returned, find that locale name, otherwise use "en-us".
+  if (success) {
+    HR(strings->FindLocaleName(localeName, &index, &exists));
+  }
+
+  // if the above find did not find a match, retry with US English
+  if (!exists) {
+    HR(strings->FindLocaleName(L"en-us", &index, &exists));
+  }
+
+  if (!exists)
+    index = 0;
+
+  return index;
+}
+
 // gets a localized string for a font
-char *getString(IDWriteFont *font, DWRITE_INFORMATIONAL_STRING_ID string_id) {
+char *getString(IDWriteFont *font, DWRITE_INFORMATIONAL_STRING_ID string_id, bool isLanguageSpecified = false) {
   char *res = NULL;
   IDWriteLocalizedStrings *strings = NULL;
 
@@ -60,7 +80,12 @@ char *getString(IDWriteFont *font, DWRITE_INFORMATIONAL_STRING_ID string_id) {
   ));
 
   if (exists) {
-    unsigned int index = getLocaleIndex(strings);
+    unsigned int index = 0;
+    if(isLanguageSpecified) {
+      index = getLocaleIndexByName(strings, L"ja-jp");
+    } else {
+      index = getLocaleIndex(strings);
+    }
     unsigned int len = 0;
     WCHAR *str = NULL;
 
@@ -254,7 +279,7 @@ FontDescriptor *findFont(FontDescriptor *desc) {
     delete fonts;
 
     FontDescriptor *fallback = new FontDescriptor(
-      NULL, NULL, NULL, NULL, 
+      NULL, NULL, NULL, NULL, NULL,
       desc->weight, desc->width, desc->italic, false
     );
 
