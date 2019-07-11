@@ -47,14 +47,12 @@ unsigned int getLocaleIndex(IDWriteLocalizedStrings *strings) {
   return index;
 }
 
-unsigned int getLocaleIndexByName(IDWriteLocalizedStrings *strings, wchar_t* localName) {
+unsigned int getLocaleIndexByName(IDWriteLocalizedStrings *strings, wchar_t* localeName) {
   unsigned int index = 0;
   BOOL exists = false;
 
   // If the default locale is returned, find that locale name, otherwise use "en-us".
-  if (success) {
-    HR(strings->FindLocaleName(localeName, &index, &exists));
-  }
+  HR(strings->FindLocaleName(localeName, &index, &exists));
 
   // if the above find did not find a match, retry with US English
   if (!exists) {
