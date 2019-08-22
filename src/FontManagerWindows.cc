@@ -219,10 +219,10 @@ bool resultMatches(FontDescriptor *result, FontDescriptor *desc) {
   if (desc->width && desc->width != result->width)
     return false;
 
-  if (desc->italic != result->italic)
+  if (desc->italic && desc->italic != result->italic)
     return false;
 
-  if (desc->monospace != result->monospace)
+  if (desc->monospace && desc->monospace != result->monospace)
     return false;
 
   return true;
