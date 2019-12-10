@@ -45,7 +45,7 @@ public:
   FontWidth width;
   bool italic;
   bool monospace;
-  
+
   FontDescriptor(Local<Object> obj) {
     path = NULL;
     postscriptName = getString(obj, "postscriptName");
@@ -67,8 +67,8 @@ public:
     italic = false;
     monospace = false;
   }
-  
-  FontDescriptor(const char *path, const char *postscriptName, const char *family, const char *style, 
+
+  FontDescriptor(const char *path, const char *postscriptName, const char *family, const char *style,
                  FontWeight weight, FontWidth width, bool italic, bool monospace) {
     this->path = copyString(path);
     this->postscriptName = copyString(postscriptName);
@@ -90,39 +90,51 @@ public:
     italic = desc->italic;
     monospace = desc->monospace;
   }
-  
+
   ~FontDescriptor() {
     if (path)
       delete path;
-    
+
     if (postscriptName)
       delete postscriptName;
-    
+
     if (family)
       delete family;
-    
+
     if (style)
       delete style;
-    
+
     postscriptName = NULL;
     family = NULL;
     style = NULL;
   }
-  
+
   Local<Object> toJSObject() {
     Nan::EscapableHandleScope scope;
     Local<Object> res = Nan::New<Object>();
-    res->Set(Nan::New<String>("path").ToLocalChecked(), Nan::New<String>(path).ToLocalChecked());
-    res->Set(Nan::New<String>("postscriptName").ToLocalChecked(), Nan::New<String>(postscriptName).ToLocalChecked());
-    res->Set(Nan::New<String>("family").ToLocalChecked(), Nan::New<String>(family).ToLocalChecked());
-    res->Set(Nan::New<String>("style").ToLocalChecked(), Nan::New<String>(style).ToLocalChecked());
-    res->Set(Nan::New<String>("weight").ToLocalChecked(), Nan::New<Number>(weight));
-    res->Set(Nan::New<String>("width").ToLocalChecked(), Nan::New<Number>(width));
-    res->Set(Nan::New<String>("italic").ToLocalChecked(), Nan::New<v8::Boolean>(italic));
-    res->Set(Nan::New<String>("monospace").ToLocalChecked(), Nan::New<v8::Boolean>(monospace));
+    if (path) {
+      Nan::Set(res, Nan::New("path").ToLocalChecked(), Nan::New<String>(path).ToLocalChecked());
+    }
+
+    if (postscriptName) {
+      Nan::Set(res, Nan::New("postscriptName").ToLocalChecked(), Nan::New<String>(postscriptName).ToLocalChecked());
+    }
+
+    if (family) {
+      Nan::Set(res, Nan::New("family").ToLocalChecked(), Nan::New<String>(family).ToLocalChecked());
+    }
+
+    if (style) {
+      Nan::Set(res, Nan::New("style").ToLocalChecked(), Nan::New<String>(style).ToLocalChecked());
+    }
+
+    Nan::Set(res, Nan::New("weight").ToLocalChecked(), Nan::New<Number>(weight));
+    Nan::Set(res, Nan::New("width").ToLocalChecked(), Nan::New<Number>(width));
+    Nan::Set(res, Nan::New("italic").ToLocalChecked(), Nan::New<v8::Boolean>(italic));
+    Nan::Set(res, Nan::New("monospace").ToLocalChecked(), Nan::New<v8::Boolean>(monospace));
     return scope.Escape(res);
   }
-  
+
 private:
   char *copyString(const char *input) {
     if (!input)
@@ -132,37 +144,52 @@ private:
     strcpy(str, input);
     return str;
   }
-  
+
   char *getString(Local<Object> obj, const char *name) {
     Nan::HandleScope scope;
-    Local<Value> value = obj->Get(Nan::New<String>(name).ToLocalChecked());
-    
-    if (value->IsString()) {
-      return copyString(*Nan::Utf8String(value));
+    Nan::MaybeLocal<v8::Value> maybeValue = Nan::Get(obj, Nan::New(name).ToLocalChecked());
+
+    if (maybeValue.IsEmpty()) {
+      return NULL;
     }
-  
+
+    v8::Local<v8::Value> value = maybeValue.ToLocalChecked();
+    if (value->IsString()) {
+      return copyString(*Nan::Utf8String(Nan::To<v8::String>(value).ToLocalChecked()));
+    }
+
     return NULL;
   }
-  
+
   int getNumber(Local<Object> obj, const char *name) {
     Nan::HandleScope scope;
-    Local<Value> value = obj->Get(Nan::New<String>(name).ToLocalChecked());
-    
-    if (value->IsNumber()) {
-      return value->Int32Value();
+    Nan::MaybeLocal<v8::Value> maybeValue = Nan::Get(obj, Nan::New(name).ToLocalChecked());
+
+    if (maybeValue.IsEmpty()) {
+      return 0;
     }
-    
+
+    v8::Local<v8::Value> value = maybeValue.ToLocalChecked();
+    if (value->IsNumber()) {
+      return Nan::To<int>(value).FromJust();
+    }
+
     return 0;
   }
-  
+
   bool getBool(Local<Object> obj, const char *name) {
     Nan::HandleScope scope;
-    Local<Value> value = obj->Get(Nan::New<String>(name).ToLocalChecked());
-    
-    if (value->IsBoolean()) {
-      return value->BooleanValue();
+    Nan::MaybeLocal<v8::Value> maybeValue = Nan::Get(obj, Nan::New(name).ToLocalChecked());
+
+    if (maybeValue.IsEmpty()) {
+      return false;
     }
-    
+
+    v8::Local<v8::Value> value = maybeValue.ToLocalChecked();
+    if (value->IsBoolean()) {
+      return Nan::To<bool>(value).FromJust();
+    }
+
     return false;
   }
 };

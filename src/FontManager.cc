@@ -20,7 +20,7 @@ Local<Array> collectResults(ResultSet *results) {
 
   int i = 0;
   for (ResultSet::iterator it = results->begin(); it != results->end(); it++) {
-    res->Set(i++, (*it)->toJSObject());
+    Nan::Set(res, i++, (*it)->toJSObject());
   }
 
   delete results;
