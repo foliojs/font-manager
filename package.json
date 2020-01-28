@@ -5,7 +5,7 @@
   "main": "build/Release/fontmanager",
   "types": "index.d.ts",
   "dependencies": {
-    "nan": ">=2.10.0"
+    "nan": ">=2.14.0"
   },
   "devDependencies": {
     "mocha": "*"
