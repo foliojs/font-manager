@@ -173,7 +173,7 @@ private:
     MaybeLocal<Value> value = Nan::Get(obj, Nan::New<String>(name).ToLocalChecked());
 
     if (!value.IsEmpty() && value.ToLocalChecked()->IsBoolean()) {
-      return value.ToLocalChecked()->BooleanValue(Nan::GetCurrentContext()).FromJust();
+      return value.ToLocalChecked()->BooleanValue((Nan::GetCurrentContext())->GetIsolate());
     }
 
     return false;
