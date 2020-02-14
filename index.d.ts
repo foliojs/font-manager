@@ -59,7 +59,7 @@ declare module 'font-manager' {
      * findFonts({ family: 'Arial' }, (fonts) => { ... });
      * findFonts((fonts) => { ... });
      */
-    export function findFonts(fontDescriptor: QueryFontDescriptor | undefined, callback: (fonts: FontDescriptor[]) => void);
+    export function findFonts(fontDescriptor: QueryFontDescriptor | undefined, callback: (fonts: FontDescriptor[]) => void): void;
 
     /**
      * Find only one font matching the given query. This function always returns
@@ -85,7 +85,7 @@ declare module 'font-manager' {
      * findFont((font) => { ... });
      * @returns Only one font description matching those query parameters
      */
-    export function findFont(fontDescriptor: QueryFontDescriptor | undefined, callback: (font: FontDescriptor) => void);
+    export function findFont(fontDescriptor: QueryFontDescriptor | undefined, callback: (font: FontDescriptor) => void): void;
 
     /**
      * Substitutes the font with the given post script name with another font
@@ -114,5 +114,5 @@ declare module 'font-manager' {
      * @param postscriptName Name of the font to be replaced
      * @param text Characters for matching
      */
-    export function substituteFont(postscriptName: string, text: string, callback: (font: FontDescriptor) => void);
+    export function substituteFont(postscriptName: string, text: string, callback: (font: FontDescriptor) => void): void;
 }
