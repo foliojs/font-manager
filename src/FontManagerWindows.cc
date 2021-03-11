@@ -66,7 +66,7 @@ unsigned int getLocaleIndexByName(IDWriteLocalizedStrings *strings, wchar_t* loc
 }
 
 // gets a localized string for a font
-char *getString(IDWriteFont *font, DWRITE_INFORMATIONAL_STRING_ID string_id, bool isLanguageSpecified = false) {
+char *getString(IDWriteFont *font, DWRITE_INFORMATIONAL_STRING_ID string_id, bool isLanguageSpecified = false, wchar_t* localeName = L"ja-jp") {
   char *res = NULL;
   IDWriteLocalizedStrings *strings = NULL;
 
@@ -80,7 +80,7 @@ char *getString(IDWriteFont *font, DWRITE_INFORMATIONAL_STRING_ID string_id, boo
   if (exists) {
     unsigned int index = 0;
     if(isLanguageSpecified) {
-      index = getLocaleIndexByName(strings, L"ja-jp");
+      index = getLocaleIndexByName(strings, localeName);
     } else {
       index = getLocaleIndex(strings);
     }
@@ -144,6 +144,7 @@ FontDescriptor *resultFromFont(IDWriteFont *font) {
       char *postscriptName = getString(font, DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_NAME);
       char *family = getString(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES);
       char *localizedName = getString(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES);
+      char *enName = getString(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES, true, L"en-us");
       char *style = getString(font, DWRITE_INFORMATIONAL_STRING_WIN32_SUBFAMILY_NAMES);
 
       // this method requires windows 7, so we need to cast to an IDWriteFontFace1
@@ -155,6 +156,7 @@ FontDescriptor *resultFromFont(IDWriteFont *font) {
         postscriptName,
         family,
         localizedName,
+        enName,
         style,
         (FontWeight) font->GetWeight(),
         (FontWidth) font->GetStretch(),
@@ -167,6 +169,7 @@ FontDescriptor *resultFromFont(IDWriteFont *font) {
       delete postscriptName;
       delete family;
       delete localizedName;
+      delete enName;
       delete style;
       fileLoader->Release();
     }
@@ -277,7 +280,7 @@ FontDescriptor *findFont(FontDescriptor *desc) {
     delete fonts;
 
     FontDescriptor *fallback = new FontDescriptor(
-      NULL, NULL, NULL, NULL, NULL,
+      NULL, NULL, NULL, NULL, NULL, NULL,
       desc->weight, desc->width, desc->italic, false
     );
 
