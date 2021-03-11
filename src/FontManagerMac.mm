@@ -60,7 +60,7 @@ FontDescriptor *createFontDescriptor(CTFontDescriptorRef descriptor) {
   NSString *psName = (NSString *) CTFontDescriptorCopyAttribute(descriptor, kCTFontNameAttribute);  
   NSString *family = (NSString *) CTFontDescriptorCopyAttribute(descriptor, kCTFontFamilyNameAttribute);
   NSString *localizedName = getLocalizedAttribute(descriptor, kCTFontFamilyNameAttribute, NULL);
-  NSString *enName = getLocalizedAttribute(descriptor, kCTFontFamilyNameAttribute, CFSTR("en"));
+  NSString *enName = getLocalizedAttribute(descriptor, kCTFontFamilyNameAttribute, (CFStringRef)@"en");
   NSString *style = (NSString *) CTFontDescriptorCopyAttribute(descriptor, kCTFontStyleNameAttribute);
   
   NSDictionary *traits = (NSDictionary *) CTFontDescriptorCopyAttribute(descriptor, kCTFontTraitsAttribute);
