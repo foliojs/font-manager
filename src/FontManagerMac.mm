@@ -60,7 +60,8 @@ FontDescriptor *createFontDescriptor(CTFontDescriptorRef descriptor) {
   NSString *psName = (NSString *) CTFontDescriptorCopyAttribute(descriptor, kCTFontNameAttribute);  
   NSString *family = (NSString *) CTFontDescriptorCopyAttribute(descriptor, kCTFontFamilyNameAttribute);
   NSString *localizedName = getLocalizedAttribute(descriptor, kCTFontFamilyNameAttribute, NULL);
-  NSString *enName = getLocalizedAttribute(descriptor, kCTFontFamilyNameAttribute, (CFStringRef)@"en");
+  CFStringRef enlocale = CFSTR("en");
+  NSString *enName = getLocalizedAttribute(descriptor, kCTFontFamilyNameAttribute, &enlocale);
   NSString *style = (NSString *) CTFontDescriptorCopyAttribute(descriptor, kCTFontStyleNameAttribute);
   
   NSDictionary *traits = (NSDictionary *) CTFontDescriptorCopyAttribute(descriptor, kCTFontTraitsAttribute);
@@ -85,6 +86,8 @@ FontDescriptor *createFontDescriptor(CTFontDescriptorRef descriptor) {
     (symbolicTraits & kCTFontItalicTrait) != 0,
     (symbolicTraits & kCTFontMonoSpaceTrait) != 0
   );
+
+  CFRelease(enlocale);
     
   [url release];
   [psName release];
