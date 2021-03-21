@@ -139,22 +139,6 @@ ResultSet *getResultSet(FcFontSet *fs) {
   return res;
 }
 
-ResultSet *getAvailableFonts() {
-  FcInit();
-
-  FcPattern *pattern = FcPatternCreate();
-  FcObjectSet *os = FcObjectSetBuild(FC_FILE, FC_POSTSCRIPT_NAME, FC_FAMILY, FC_STYLE, FC_WEIGHT, FC_WIDTH, FC_SLANT, FC_SPACING, NULL);
-  FcFontSet *fs = FcFontList(NULL, pattern, os);
-  ResultSet *res = getResultSet(fs);
-  
-  FcPatternDestroy(pattern);
-  FcObjectSetDestroy(os);
-  FcFontSetDestroy(fs);
-
-  return res;
-}
-
-
 FcPattern *createPattern(FontDescriptor *desc) {
   FcInit();
   FcPattern *pattern = FcPatternCreate();
@@ -183,7 +167,18 @@ FcPattern *createPattern(FontDescriptor *desc) {
   return pattern;
 }
 
-ResultSet *findFonts(FontDescriptor *desc) {
+ResultSet *getMonospaceFonts() {
+  FontDescriptor *desc = new FontDescriptor(
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    FontWeightUndefined,
+    FontWidthUndefined,
+    false,
+    true
+  );
+
   FcPattern *pattern = createPattern(desc);
   FcObjectSet *os = FcObjectSetBuild(FC_FILE, FC_POSTSCRIPT_NAME, FC_FAMILY, FC_STYLE, FC_WEIGHT, FC_WIDTH, FC_SLANT, FC_SPACING, NULL);
   FcFontSet *fs = FcFontList(NULL, pattern, os);
@@ -192,55 +187,6 @@ ResultSet *findFonts(FontDescriptor *desc) {
   FcFontSetDestroy(fs);
   FcPatternDestroy(pattern);
   FcObjectSetDestroy(os);
-
-  return res;
-}
-
-FontDescriptor *findFont(FontDescriptor *desc) {
-  FcPattern *pattern = createPattern(desc);
-  FcConfigSubstitute(NULL, pattern, FcMatchPattern);
-  FcDefaultSubstitute(pattern);
-
-  FcResult result;
-  FcPattern *font = FcFontMatch(NULL, pattern, &result);
-  FontDescriptor *res = createFontDescriptor(font);
-
-  FcPatternDestroy(pattern);
-  FcPatternDestroy(font);
-
-  return res;
-}
-
-FontDescriptor *substituteFont(char *postscriptName, char *string) {
-  FcInit();
-
-  // create a pattern with the postscript name
-  FcPattern* pattern = FcPatternCreate();
-  FcPatternAddString(pattern, FC_POSTSCRIPT_NAME, (FcChar8 *) postscriptName);
-
-  // create a charset with each character in the string
-  FcCharSet* charset = FcCharSetCreate();
-  int len = strlen(string);
-
-  for (int i = 0; i < len;) {
-    FcChar32 c;
-    i += FcUtf8ToUcs4((FcChar8 *)string + i, &c, len - i);
-    FcCharSetAddChar(charset, c);
-  }
-
-  FcPatternAddCharSet(pattern, FC_CHARSET, charset);
-  FcCharSetDestroy(charset);
-
-  FcConfigSubstitute(0, pattern, FcMatchPattern);
-  FcDefaultSubstitute(pattern);
-
-  // find the best match font
-  FcResult result;
-  FcPattern *font = FcFontMatch(NULL, pattern, &result);
-  FontDescriptor *res = createFontDescriptor(font);
-
-  FcPatternDestroy(pattern);
-  FcPatternDestroy(font);
 
   return res;
 }

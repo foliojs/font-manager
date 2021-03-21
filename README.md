@@ -46,25 +46,22 @@ the platform APIs that are available.
   - [Platforms](#platforms)
   - [Installation](#installation)
   - [API](#api)
-    - [getAvailableFonts()](#getavailablefonts)
-    - [findFonts(fontDescriptor)](#findfontsfontdescriptor)
-    - [findFont(fontDescriptor)](#findfontfontdescriptor)
-    - [substituteFont(postscriptName, text)](#substitutefontpostscriptname-text)
+    - [getMonospaceFonts()](#getmonospacefonts)
     - [Font Descriptor](#font-descriptor)
       - [Weights](#weights)
       - [Widths](#widths)
   - [License](#license)
 
-### getAvailableFonts()
+### getMonospaceFonts()
 
-Returns an array of all [font descriptors](#font-descriptor) available on the system.
+Returns an array of all monospace [font descriptors](#font-descriptor) available on the system.
 
 ```javascript
 // asynchronous API
-fontManager.getAvailableFonts(function(fonts) { ... });
+fontManager.getMonospaceFonts(function(fonts) { ... });
 
 // synchronous API
-var fonts = fontManager.getAvailableFontsSync();
+var fonts = fontManager.getMonospaceFontsSync();
 
 // output
 [ { path: '/Library/Fonts/Arial.ttf',
@@ -76,91 +73,6 @@ var fonts = fontManager.getAvailableFontsSync();
     italic: false,
     monospace: false },
   ... ]
-```
-
-### findFonts(fontDescriptor)
-
-Returns an array of [font descriptors](#font-descriptor) matching a query
-[font descriptor](#font-descriptor).
-The returned array may be empty if no fonts match the font descriptor.
-
-```javascript
-// asynchronous API
-fontManager.findFonts({ family: 'Arial' }, function(fonts) { ... });
-
-// synchronous API
-var fonts = fontManager.findFontsSync({ family: 'Arial' });
-
-// output
-[ { path: '/Library/Fonts/Arial.ttf',
-    postscriptName: 'ArialMT',
-    family: 'Arial',
-    style: 'Regular',
-    weight: 400,
-    width: 5,
-    italic: false,
-    monospace: false },
-  { path: '/Library/Fonts/Arial Bold.ttf',
-    postscriptName: 'Arial-BoldMT',
-    family: 'Arial',
-    style: 'Bold',
-    weight: 700,
-    width: 5,
-    italic: false,
-    monospace: false } ]
-```
-
-### findFont(fontDescriptor)
-
-Returns a single [font descriptors](#font-descriptor) matching a query
-[font descriptors](#font-descriptor) as well as possible. This method
-always returns a result (never `null`), so sometimes the output will not
-exactly match the input font descriptor if not all input parameters
-could be met.
-
-```javascript
-// asynchronous API
-fontManager.findFont({ family: 'Arial', weight: 700 }, function(font) { ... });
-
-// synchronous API
-var font = fontManager.findFontSync({ family: 'Arial', weight: 700 });
-
-// output
-{ path: '/Library/Fonts/Arial Bold.ttf',
-  postscriptName: 'Arial-BoldMT',
-  family: 'Arial',
-  style: 'Bold',
-  weight: 700,
-  width: 5,
-  italic: false,
-  monospace: false }
-```
-
-### substituteFont(postscriptName, text)
-
-Substitutes the font with the given `postscriptName` with another font
-that contains the characters in `text`. If a font matching `postscriptName`
-is not found, a font containing the given characters is still returned. If
-a font matching `postscriptName` _is_ found, its characteristics (bold, italic, etc.)
-are used to find a suitable replacement. If the font already contains the characters
-in `text`, it is not replaced and the font descriptor for the original font is returned.
-
-```javascript
-// asynchronous API
-fontManager.substituteFont('TimesNewRomanPSMT', '汉字', function(font) { ... });
-
-// synchronous API
-var font = fontManager.substituteFontSync('TimesNewRomanPSMT', '汉字');
-
-// output
-{ path: '/Library/Fonts/Songti.ttc',
-  postscriptName: 'STSongti-SC-Regular',
-  family: 'Songti SC',
-  style: 'Regular',
-  weight: 400,
-  width: 5,
-  italic: false,
-  monospace: false }
 ```
 
 ### Font Descriptor
