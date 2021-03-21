@@ -1,26 +1,26 @@
 {
   "targets": [
     {
-      "target_name": "fontmanager",
-      "sources": [ "src/FontManager.cc" ],
+      "target_name": "system-fonts",
+      "sources": [ "lib/FontManager.cc" ],
       "include_dirs" : [
         "<!(node -e \"require('nan')\")"
       ],
       "conditions": [
         ['OS=="mac"', {
-          "sources": ["src/FontManagerMac.mm"],
+          "sources": ["lib/FontManagerMac.mm"],
           "link_settings": {
             "libraries": ["CoreText.framework", "Foundation.framework"]
           }
         }],
         ['OS=="win"', {
-          "sources": ["src/FontManagerWindows.cc"],
+          "sources": ["lib/FontManagerWindows.cc"],
           "link_settings": {
             "libraries": ["Dwrite.lib"]
           }
         }],
         ['OS=="linux"', {
-          "sources": ["src/FontManagerLinux.cc"],
+          "sources": ["lib/FontManagerLinux.cc"],
           "link_settings": {
             "libraries": ["-lfontconfig"]
           }

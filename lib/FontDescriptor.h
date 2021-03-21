@@ -116,19 +116,19 @@ public:
     if (path) {
       Nan::Set(res, Nan::New<String>("path").ToLocalChecked(), Nan::New<String>(path).ToLocalChecked());
     }
-    
+
     if (postscriptName) {
       Nan::Set(res, Nan::New<String>("postscriptName").ToLocalChecked(), Nan::New<String>(postscriptName).ToLocalChecked());
     }
-    
+
     if (family) {
       Nan::Set(res, Nan::New<String>("family").ToLocalChecked(), Nan::New<String>(family).ToLocalChecked());
     }
-    
+
     if (style) {
       Nan::Set(res, Nan::New<String>("style").ToLocalChecked(), Nan::New<String>(style).ToLocalChecked());
     }
-    
+
     Nan::Set(res, Nan::New<String>("weight").ToLocalChecked(), Nan::New<Number>(weight));
     Nan::Set(res, Nan::New<String>("width").ToLocalChecked(), Nan::New<Number>(width));
     Nan::Set(res, Nan::New<String>("italic").ToLocalChecked(), Nan::New<v8::Boolean>(italic));
@@ -173,7 +173,7 @@ private:
     MaybeLocal<Value> value = Nan::Get(obj, Nan::New<String>(name).ToLocalChecked());
 
     if (!value.IsEmpty() && value.ToLocalChecked()->IsBoolean()) {
-      return value.ToLocalChecked()->BooleanValue(Nan::GetCurrentContext()).FromJust();
+      return value.ToLocalChecked()->BooleanValue((Nan::GetCurrentContext())->GetIsolate());
     }
 
     return false;
