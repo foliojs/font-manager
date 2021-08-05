@@ -47,8 +47,26 @@ unsigned int getLocaleIndex(IDWriteLocalizedStrings *strings) {
   return index;
 }
 
+unsigned int getLocaleIndexByName(IDWriteLocalizedStrings *strings, wchar_t* localeName) {
+  unsigned int index = 0;
+  BOOL exists = false;
+
+  // If the default locale is returned, find that locale name, otherwise use "en-us".
+  HR(strings->FindLocaleName(localeName, &index, &exists));
+
+  // if the above find did not find a match, retry with US English
+  if (!exists) {
+    HR(strings->FindLocaleName(L"en-us", &index, &exists));
+  }
+
+  if (!exists)
+    index = 0;
+
+  return index;
+}
+
 // gets a localized string for a font
-char *getString(IDWriteFont *font, DWRITE_INFORMATIONAL_STRING_ID string_id) {
+char *getString(IDWriteFont *font, DWRITE_INFORMATIONAL_STRING_ID string_id, bool isLanguageSpecified = false, wchar_t* localeName = L"ja-jp") {
   char *res = NULL;
   IDWriteLocalizedStrings *strings = NULL;
 
@@ -60,7 +78,12 @@ char *getString(IDWriteFont *font, DWRITE_INFORMATIONAL_STRING_ID string_id) {
   ));
 
   if (exists) {
-    unsigned int index = getLocaleIndex(strings);
+    unsigned int index = 0;
+    if(isLanguageSpecified) {
+      index = getLocaleIndexByName(strings, localeName);
+    } else {
+      index = getLocaleIndex(strings);
+    }
     unsigned int len = 0;
     WCHAR *str = NULL;
 
@@ -120,6 +143,8 @@ FontDescriptor *resultFromFont(IDWriteFont *font) {
       char *psName = utf16ToUtf8(name);
       char *postscriptName = getString(font, DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_NAME);
       char *family = getString(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES);
+      char *localizedName = getString(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES);
+      char *enName = getString(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES, true, L"en-us");
       char *style = getString(font, DWRITE_INFORMATIONAL_STRING_WIN32_SUBFAMILY_NAMES);
 
       bool monospace = false;
@@ -135,6 +160,8 @@ FontDescriptor *resultFromFont(IDWriteFont *font) {
         psName,
         postscriptName,
         family,
+        localizedName,
+        enName,
         style,
         (FontWeight) font->GetWeight(),
         (FontWidth) font->GetStretch(),
@@ -146,6 +173,8 @@ FontDescriptor *resultFromFont(IDWriteFont *font) {
       delete name;
       delete postscriptName;
       delete family;
+      delete localizedName;
+      delete enName;
       delete style;
       fileLoader->Release();
     }
@@ -256,7 +285,7 @@ FontDescriptor *findFont(FontDescriptor *desc) {
     delete fonts;
 
     FontDescriptor *fallback = new FontDescriptor(
-      NULL, NULL, NULL, NULL, 
+      NULL, NULL, NULL, NULL, NULL, NULL,
       desc->weight, desc->width, desc->italic, false
     );
 

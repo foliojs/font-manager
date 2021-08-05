@@ -40,6 +40,8 @@ public:
   const char *path;
   const char *postscriptName;
   const char *family;
+  const char *localizedName;
+  const char *enName;
   const char *style;
   FontWeight weight;
   FontWidth width;
@@ -50,6 +52,8 @@ public:
     path = NULL;
     postscriptName = getString(obj, "postscriptName");
     family = getString(obj, "family");
+    localizedName = getString(obj, "localizedName");
+    enName = getString(obj, "enName");
     style = getString(obj, "style");
     weight = (FontWeight) getNumber(obj, "weight");
     width = (FontWidth) getNumber(obj, "width");
@@ -61,6 +65,8 @@ public:
     path = NULL;
     postscriptName = NULL;
     family = NULL;
+    localizedName = NULL;
+    enName = NULL;
     style = NULL;
     weight = FontWeightUndefined;
     width = FontWidthUndefined;
@@ -68,11 +74,13 @@ public:
     monospace = false;
   }
 
-  FontDescriptor(const char *path, const char *postscriptName, const char *family, const char *style,
+  FontDescriptor(const char *path, const char *postscriptName, const char *family, const char *localizedName, const char *enName, const char *style,
                  FontWeight weight, FontWidth width, bool italic, bool monospace) {
     this->path = copyString(path);
     this->postscriptName = copyString(postscriptName);
     this->family = copyString(family);
+    this->localizedName = copyString(localizedName);
+    this->enName = copyString(enName);
     this->style = copyString(style);
     this->weight = weight;
     this->width = width;
@@ -84,6 +92,8 @@ public:
     path = copyString(desc->path);
     postscriptName = copyString(desc->postscriptName);
     family = copyString(desc->family);
+    localizedName = copyString(desc->localizedName);
+    enName = copyString(desc->enName);
     style = copyString(desc->style);
     weight = desc->weight;
     width = desc->width;
@@ -101,11 +111,19 @@ public:
     if (family)
       delete family;
 
+    if (localizedName)
+      delete localizedName;
+
+    if (enName)
+      delete enName;
+
     if (style)
       delete style;
 
     postscriptName = NULL;
     family = NULL;
+    localizedName = NULL;
+    enName = NULL;
     style = NULL;
   }
 
@@ -116,19 +134,27 @@ public:
     if (path) {
       Nan::Set(res, Nan::New<String>("path").ToLocalChecked(), Nan::New<String>(path).ToLocalChecked());
     }
-    
+
     if (postscriptName) {
       Nan::Set(res, Nan::New<String>("postscriptName").ToLocalChecked(), Nan::New<String>(postscriptName).ToLocalChecked());
     }
-    
+
     if (family) {
       Nan::Set(res, Nan::New<String>("family").ToLocalChecked(), Nan::New<String>(family).ToLocalChecked());
     }
-    
+
+    if (localizedName) {
+      Nan::Set(res, Nan::New<String>("localizedName").ToLocalChecked(), Nan::New<String>(style).ToLocalChecked());
+    }
+
+    if (enName) {
+      Nan::Set(res, Nan::New<String>("enName").ToLocalChecked(), Nan::New<String>(style).ToLocalChecked());
+    }
+
     if (style) {
       Nan::Set(res, Nan::New<String>("style").ToLocalChecked(), Nan::New<String>(style).ToLocalChecked());
     }
-    
+
     Nan::Set(res, Nan::New<String>("weight").ToLocalChecked(), Nan::New<Number>(weight));
     Nan::Set(res, Nan::New<String>("width").ToLocalChecked(), Nan::New<Number>(width));
     Nan::Set(res, Nan::New<String>("italic").ToLocalChecked(), Nan::New<v8::Boolean>(italic));
