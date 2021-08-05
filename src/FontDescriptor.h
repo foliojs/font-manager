@@ -143,11 +143,11 @@ public:
     }
 
     if (localizedName) {
-      Nan::Set(res, Nan::New("localizedName").ToLocalChecked(), Nan::New<String>(style).ToLocalChecked());
+      Nan::Set(res, Nan::New("localizedName").ToLocalChecked(), Nan::New<String>(localizedName).ToLocalChecked());
     }
 
     if (enName) {
-      Nan::Set(res, Nan::New("enName").ToLocalChecked(), Nan::New<String>(style).ToLocalChecked());
+      Nan::Set(res, Nan::New("enName").ToLocalChecked(), Nan::New<String>(enName).ToLocalChecked());
     }
 
     if (style) {
