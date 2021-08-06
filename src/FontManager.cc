@@ -221,4 +221,8 @@ NAN_MODULE_INIT(Init) {
   Nan::Export(target, "substituteFontSync", substituteFont<false>);
 }
 
+#if NODE_MAJOR_VERSION >= 10
+NAN_MODULE_WORKER_ENABLED(fontmanager, Init)
+#else
 NODE_MODULE(fontmanager, Init)
+#endif
