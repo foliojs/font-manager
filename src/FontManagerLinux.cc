@@ -1,6 +1,10 @@
 #include <fontconfig/fontconfig.h>
 #include "FontDescriptor.h"
 
+#if FC_MAJOR <= 2 && FC_MINOR <= 10 && FC_REVISION <= 91
+#error this version of fontconfig isn't threadsafe. failing.
+#endif
+
 int convertWeight(FontWeight weight) {
   switch (weight) {
     case FontWeightThin:

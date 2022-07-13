@@ -1,13 +1,12 @@
 #ifndef FONT_DESCRIPTOR_H
 #define FONT_DESCRIPTOR_H
-#include <node.h>
-#include <v8.h>
-#include <nan.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
 #include <vector>
 
-using namespace v8;
+#include "napi.h"
+
+using namespace Napi;
 
 enum FontWeight {
   FontWeightUndefined   = 0,
@@ -46,15 +45,15 @@ public:
   bool italic;
   bool monospace;
 
-  FontDescriptor(Local<Object> obj) {
+  FontDescriptor(Napi::Env env, Napi::Object obj) {
     path = NULL;
-    postscriptName = getString(obj, "postscriptName");
-    family = getString(obj, "family");
-    style = getString(obj, "style");
-    weight = (FontWeight) getNumber(obj, "weight");
-    width = (FontWidth) getNumber(obj, "width");
-    italic = getBool(obj, "italic");
-    monospace = getBool(obj, "monospace");
+    postscriptName = getString(env, obj, "postscriptName");
+    family = getString(env, obj, "family");
+    style = getString(env, obj, "style");
+    weight = (FontWeight) getNumber(env, obj, "weight");
+    width = (FontWidth) getNumber(env, obj, "width");
+    italic = getBool(env, obj, "italic");
+    monospace = getBool(env, obj, "monospace");
   }
 
   FontDescriptor() {
@@ -109,30 +108,30 @@ public:
     style = NULL;
   }
 
-  Local<Object> toJSObject() {
-    Nan::EscapableHandleScope scope;
-    Local<Object> res = Nan::New<Object>();
+  Napi::Object toJSObject(Napi::Env env) {
+    Napi::EscapableHandleScope scope(env);
+    Napi::Object res = Napi::Object::New(env);
     if (path) {
-      Nan::Set(res, Nan::New("path").ToLocalChecked(), Nan::New<String>(path).ToLocalChecked());
+      (res).Set(Napi::String::New(env, "path"), Napi::String::New(env, path));
     }
 
     if (postscriptName) {
-      Nan::Set(res, Nan::New("postscriptName").ToLocalChecked(), Nan::New<String>(postscriptName).ToLocalChecked());
+      (res).Set(Napi::String::New(env, "postscriptName"), Napi::String::New(env, postscriptName));
     }
 
     if (family) {
-      Nan::Set(res, Nan::New("family").ToLocalChecked(), Nan::New<String>(family).ToLocalChecked());
+      (res).Set(Napi::String::New(env, "family"), Napi::String::New(env, family));
     }
 
     if (style) {
-      Nan::Set(res, Nan::New("style").ToLocalChecked(), Nan::New<String>(style).ToLocalChecked());
+      (res).Set(Napi::String::New(env, "style"), Napi::String::New(env, style));
     }
 
-    Nan::Set(res, Nan::New("weight").ToLocalChecked(), Nan::New<Number>(weight));
-    Nan::Set(res, Nan::New("width").ToLocalChecked(), Nan::New<Number>(width));
-    Nan::Set(res, Nan::New("italic").ToLocalChecked(), Nan::New<v8::Boolean>(italic));
-    Nan::Set(res, Nan::New("monospace").ToLocalChecked(), Nan::New<v8::Boolean>(monospace));
-    return scope.Escape(res);
+    (res).Set(Napi::String::New(env, "weight"), Napi::Number::New(env, weight));
+    (res).Set(Napi::String::New(env, "width"), Napi::Number::New(env, width));
+    (res).Set(Napi::String::New(env, "italic"), Napi::Boolean::New(env, italic));
+    (res).Set(Napi::String::New(env, "monospace"), Napi::Boolean::New(env, monospace));
+    return scope.Escape(res).As<Napi::Object>();
   }
 
 private:
@@ -145,52 +144,37 @@ private:
     return str;
   }
 
-  char *getString(Local<Object> obj, const char *name) {
-    Nan::HandleScope scope;
-    Nan::MaybeLocal<v8::Value> maybeValue = Nan::Get(obj, Nan::New(name).ToLocalChecked());
+  char *getString(Napi::Env env, Napi::Object obj, const char *name) {
+    Napi::HandleScope scope(env);
+    Napi::Value value;
 
-    if (maybeValue.IsEmpty()) {
+    if (!obj.Get(name).UnwrapTo(&value) || !value.IsString()) {
       return NULL;
     }
 
-    v8::Local<v8::Value> value = maybeValue.ToLocalChecked();
-    if (value->IsString()) {
-      return copyString(*Nan::Utf8String(Nan::To<v8::String>(value).ToLocalChecked()));
-    }
-
-    return NULL;
+    return copyString(value.As<Napi::String>().Utf8Value().c_str());
   }
 
-  int getNumber(Local<Object> obj, const char *name) {
-    Nan::HandleScope scope;
-    Nan::MaybeLocal<v8::Value> maybeValue = Nan::Get(obj, Nan::New(name).ToLocalChecked());
+  int getNumber(Napi::Env env, Napi::Object obj, const char *name) {
+    Napi::HandleScope scope(env);
+    Napi::Value value;
 
-    if (maybeValue.IsEmpty()) {
+    if (!obj.Get(name).UnwrapTo(&value) || !value.IsNumber()) {
       return 0;
     }
 
-    v8::Local<v8::Value> value = maybeValue.ToLocalChecked();
-    if (value->IsNumber()) {
-      return Nan::To<int>(value).FromJust();
-    }
-
-    return 0;
+    return value.As<Napi::Number>().Int32Value();
   }
 
-  bool getBool(Local<Object> obj, const char *name) {
-    Nan::HandleScope scope;
-    Nan::MaybeLocal<v8::Value> maybeValue = Nan::Get(obj, Nan::New(name).ToLocalChecked());
+  bool getBool(Napi::Env env, Napi::Object obj, const char *name) {
+    Napi::HandleScope scope(env);
+    Napi::Value value;
 
-    if (maybeValue.IsEmpty()) {
+    if (!obj.Get(name).UnwrapTo(&value) || !value.IsBoolean()) {
       return false;
     }
 
-    v8::Local<v8::Value> value = maybeValue.ToLocalChecked();
-    if (value->IsBoolean()) {
-      return Nan::To<bool>(value).FromJust();
-    }
-
-    return false;
+    return value.As<Napi::Boolean>().Value();
   }
 };
 
