@@ -1,5 +1,4 @@
 #include <cstdlib>
-#include <functional>
 
 #include "napi.h"
 #include "FontDescriptor.h"
@@ -39,19 +38,33 @@ Napi::Value wrapResult(Napi::Env env, FontDescriptor *result) {
   return scope.Escape(res);
 }
 
-
+// handles asynchrnous execution for interface functions
+// this destroys itself unless we call AsyncWorker::SuppressDestruct()
+template<typename _ReturnType>
 struct PromiseAsyncWorker : public Napi::AsyncWorker {
-  PromiseAsyncWorker(Napi::Env env) :
+  static_assert(std::is_same<_ReturnType, ResultSet>::value || std::is_same<_ReturnType, FontDescriptor>::value);
+
+  PromiseAsyncWorker(Napi::Env env, std::function<long(_ReturnType **)> fn) :
     Napi::AsyncWorker(env),
-    result(env.Null()), deferred(Napi::Promise::Deferred::New(env)) {}
+    deferred(Napi::Promise::Deferred::New(env)), fn(fn) {}
 
-  void Execute() = 0;
+  virtual void Execute() override {
+    this->result = nullptr;
+    long error = this->fn(&this->result);
+    if(error) {
+      PromiseAsyncWorker::SetError(std::string("Function failed with error code ") + std::to_string(error));
+    }
+  };
 
-  void OnOK() override {
-    deferred.Resolve(result);
-  }
+  virtual void OnOK() {
+    if (std::is_same<_ReturnType, ResultSet>::value) {
+      deferred.Resolve(collectResults(this->Env(), (ResultSet *)this->result));
+    } else if(std::is_same<_ReturnType, FontDescriptor>::value) {
+      deferred.Resolve(wrapResult(this->Env(), (FontDescriptor *)this->result));
+    }
+  };
 
-  void OnError(Napi::Error const &error) override {
+  virtual void OnError(Napi::Error const &error) override {
     deferred.Reject(error.Value());
   }
 
@@ -59,12 +72,26 @@ struct PromiseAsyncWorker : public Napi::AsyncWorker {
     return deferred.Promise();
   }
 
-protected:
-  Napi::Value result;
-
 private:
   Napi::Promise::Deferred deferred;
+  _ReturnType *result;
+  std::function<long(_ReturnType **)> fn;
 };
+
+// Helper Functions
+
+// simplifies throwing errors in the sync/async functions
+template <bool async>
+Napi::Value throwError(Napi::Env env, Napi::Error err) {
+  if (async) {
+    Napi::Promise::Deferred deferred(env);
+    deferred.Reject(err.Value());
+    return deferred.Promise();
+  } else {
+    err.ThrowAsJavaScriptException();
+    return env.Null();
+  }
+}
 
 // introduced to prevent name-conflicts
 struct FontManagerInterface {
@@ -80,39 +107,16 @@ struct FontManagerInterface {
   FontManagerInterface() = delete;
 };
 
-
 // -----------------------------------------------------------------------------
 // Get Available Fonts
 // -----------------------------------------------------------------------------
-
-struct GetAvailableFontsAsyncWorker : public PromiseAsyncWorker {
-  GetAvailableFontsAsyncWorker(Napi::Env env, std::function<long(ResultSet **)> fn) :
-    PromiseAsyncWorker(env),
-    fn(fn) {}
-
-  void Execute() {
-    ResultSet *results = nullptr;
-    long error = this->fn(&results);
-
-    if(error) {
-      this->SetError(""); // TODO: need an error to set here. I think originally it was just a number
-      return;
-    }
-
-    this->result = collectResults(this->Env(), results);
-  }
-
-private:
-  std::function<long(ResultSet **)> fn;
-};
 
 template<bool async>
 Napi::Value FontManagerInterface::getAvailableFonts(const Napi::CallbackInfo& info) {
   Napi::Env const &env = info.Env();
 
-  if constexpr (async) {
-    // this destroys itself unless we call AsyncWorker::SuppressDestruct()
-    auto worker = new GetAvailableFontsAsyncWorker(env, ::getAvailableFonts);
+  if (async) {
+    auto worker = new PromiseAsyncWorker<ResultSet>(env, ::getAvailableFonts);
     worker->Queue();
 
     return worker->GetPromise();
@@ -133,42 +137,23 @@ Napi::Value FontManagerInterface::getAvailableFonts(const Napi::CallbackInfo& in
 // Find Fonts
 // -----------------------------------------------------------------------------
 
-struct FindFontsAsyncWorker : public PromiseAsyncWorker {
-  FindFontsAsyncWorker(Napi::Env env, std::function<long(ResultSet **)> fn) :
-    PromiseAsyncWorker(env),
-    fn(fn) {}
-
-  void Execute() {
-    ResultSet *results = nullptr;
-    long error = this->fn(&results);
-
-    if(error) {
-      this->SetError(""); // TODO: need an error to set here. I think originally it was just a number
-      return;
-    }
-
-    this->result = collectResults(this->Env(), results);
-  }
-
-private:
-  std::function<long(ResultSet **)> fn;
-};
-
 template<bool async>
 Napi::Value FontManagerInterface::findFonts(const Napi::CallbackInfo& info) {
   Napi::Env const &env = info.Env();
 
-  if (info.Length() < 1 || !info[0].IsObject() || info[0].IsFunction()) {
-    Napi::TypeError::New(env, "Expected a font descriptor").ThrowAsJavaScriptException();
-    return env.Null();
+  if (info.Length() < 1 || !info[0].IsObject()) {
+    return throwError<async>(env, Napi::TypeError::New(env, "Expected a font descriptor"));
   }
-
   Napi::Object desc = info[0].As<Napi::Object>();
   FontDescriptor *descriptor = new FontDescriptor(env, desc);
 
-  if constexpr (async) {
-    // this destroys itself unless we call AsyncWorker::SuppressDestruct()
-    auto worker = new FindFontsAsyncWorker(env, std::bind(::findFonts, _1, descriptor));
+  if (async) {
+    auto worker = new PromiseAsyncWorker<ResultSet>(env, [=](ResultSet **results) {
+      long error = ::findFonts(results, descriptor);
+      // need to clean up descriptor somewhere
+      delete descriptor;
+      return error;
+    });
     worker->Queue();
 
     return worker->GetPromise();
@@ -190,42 +175,25 @@ Napi::Value FontManagerInterface::findFonts(const Napi::CallbackInfo& info) {
 // Find Font
 // -----------------------------------------------------------------------------
 
-struct FindFontAsyncWorker : public PromiseAsyncWorker {
-  FindFontAsyncWorker(Napi::Env env, std::function<long(FontDescriptor **)> fn) :
-    PromiseAsyncWorker(env),
-    fn(fn) {}
 
-  void Execute() {
-    FontDescriptor *result = nullptr;
-    long error = this->fn(&result);
-
-    if(error) {
-      this->SetError(""); // TODO: need an error to set here. I think originally it was just a number
-      return;
-    }
-
-    this->result = wrapResult(this->Env(), result);
-  }
-
-private:
-  std::function<long(FontDescriptor **)> fn;
-};
 
 template<bool async>
 Napi::Value FontManagerInterface::findFont(const Napi::CallbackInfo& info) {
   Napi::Env const &env = info.Env();
 
-  if (info.Length() < 1 || !info[0].IsObject() || info[0].IsFunction()) {
-    Napi::TypeError::New(env, "Expected a font descriptor").ThrowAsJavaScriptException();
-    return env.Null();
+  if (info.Length() < 1 || !info[0].IsObject()) {
+    return throwError<async>(env, Napi::TypeError::New(env, "Expected a font descriptor"));
   }
-
   Napi::Object desc = info[0].As<Napi::Object>();
   FontDescriptor *descriptor = new FontDescriptor(env, desc);
 
-  if constexpr (async) {
-    // this destroys itself unless we call AsyncWorker::SuppressDestruct()
-    auto worker = new FindFontAsyncWorker(env, std::bind(::findFont, _1, descriptor));
+  if (async) {
+    auto worker = new PromiseAsyncWorker<FontDescriptor>(env, [=](FontDescriptor **result) {
+      long error = ::findFont(result, descriptor);
+      // need to clean up descriptor somewhere
+      delete descriptor;
+      return error;
+    });
     worker->Queue();
 
     return worker->GetPromise();
@@ -247,48 +215,24 @@ Napi::Value FontManagerInterface::findFont(const Napi::CallbackInfo& info) {
 // Substitute Fonts
 // -----------------------------------------------------------------------------
 
-struct SubstitueFontAsyncWorker : public PromiseAsyncWorker {
-  SubstitueFontAsyncWorker(Napi::Env env, std::function<long(FontDescriptor **)> fn) :
-    PromiseAsyncWorker(env),
-    fn(fn) {}
-
-  void Execute() {
-    FontDescriptor *result = nullptr;
-    long error = this->fn(&result);
-
-    if(error) {
-      this->SetError(""); // TODO: need an error to set here. I think originally it was just a number
-      return;
-    }
-
-    this->result = wrapResult(this->Env(), result);
-  }
-
-private:
-  std::function<long(FontDescriptor **)> fn;
-};
-
 template<bool async>
 Napi::Value FontManagerInterface::substituteFont(const Napi::CallbackInfo& info) {
   Napi::Env const &env = info.Env();
 
   if (info.Length() < 1 || !info[0].IsString()) {
-    Napi::TypeError::New(env, "Expected postscript name").ThrowAsJavaScriptException();
-    return env.Null();
+    return throwError<async>(env, Napi::TypeError::New(env, "Expected postscript name"));
   }
+  std::string postscriptName = info[0].As<Napi::String>();
 
   if (info.Length() < 2 || !info[1].IsString()) {
-    Napi::TypeError::New(env, "Expected substitution string").ThrowAsJavaScriptException();
-    return env.Null();
+    return throwError<async>(env, Napi::TypeError::New(env, "Expected substitution string"));
   }
-
-  std::string postscriptName = info[0].As<Napi::String>();
   std::string substitutionString = info[1].As<Napi::String>();
 
-  if constexpr (async) {
-    // this destroys itself unless we call AsyncWorker::SuppressDestruct()
-    auto worker = new SubstitueFontAsyncWorker(env,
-      std::bind(::substituteFont, _1, (char *)postscriptName.c_str(), (char *)substitutionString.c_str()));
+  if (async) {
+    auto worker = new PromiseAsyncWorker<FontDescriptor>(env, [=](FontDescriptor **result) {
+      return ::substituteFont(result, (char *)postscriptName.c_str(), (char *)substitutionString.c_str());
+    });
     worker->Queue();
 
     return worker->GetPromise();

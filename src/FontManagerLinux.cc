@@ -2,7 +2,7 @@
 #include "FontDescriptor.h"
 
 #if FC_MAJOR <= 2 && FC_MINOR <= 10 && FC_REVISION <= 91
-#error this version of fontconfig isn't threadsafe. failing.
+#error "This version of fontconfig isn't threadsafe.a"
 #endif
 
 int convertWeight(FontWeight weight) {
@@ -154,7 +154,6 @@ long getAvailableFonts(ResultSet **fonts) {
   FcPatternDestroy(pattern);
   FcObjectSetDestroy(os);
   FcFontSetDestroy(fs);
-
   return 0;
 }
 
