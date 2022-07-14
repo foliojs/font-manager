@@ -166,8 +166,9 @@ long getAvailableFonts(ResultSet **resultSet) {
 
   IDWriteFactory *factory = NULL;
 
+  // TODO: I don't know if the "internal state" being referred to here is in the factory object or in static memory. isolate until I figure it out
   RETURN_ERROR_CODE(DWriteCreateFactory(
-    DWRITE_FACTORY_TYPE_SHARED,
+    DWRITE_FACTORY_TYPE_ISOLATED,
     __uuidof(IDWriteFactory),
     reinterpret_cast<IUnknown**>(&factory)
   ));
@@ -410,8 +411,9 @@ public:
 
 long substituteFont(FontDescriptor **res, char *postscriptName, char *string) {
   IDWriteFactory *factory = NULL;
+  // TODO: I don't know if the "internal state" being referred to here is in the factory object or in static memory. isolate until I figure it out
   RETURN_ERROR_CODE(DWriteCreateFactory(
-    DWRITE_FACTORY_TYPE_SHARED,
+    DWRITE_FACTORY_TYPE_ISOLATED, 
     __uuidof(IDWriteFactory),
     reinterpret_cast<IUnknown**>(&factory)
   ));
