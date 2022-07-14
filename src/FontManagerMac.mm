@@ -87,11 +87,8 @@ long createFontDescriptor(FontDescriptor **res, CTFontDescriptorRef descriptor) 
 }
 
 long getAvailableFonts(ResultSet **resultSet) {
-  // cache font collection for fast use in future calls
-  static CTFontCollectionRef collection = NULL;
-  if (collection == NULL)
-    collection = CTFontCollectionCreateFromAvailableFonts(NULL);
-
+  // TODO: this can be cached for performance, but requires making an interface to support per-instance data. probably making a class for each OS.
+  CTFontCollectionRef collection = CTFontCollectionCreateFromAvailableFonts(NULL);
   NSArray *matches = (NSArray *) CTFontCollectionCreateMatchingFontDescriptors(collection);
 
   *resultSet = new ResultSet;
