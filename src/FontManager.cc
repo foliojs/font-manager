@@ -37,7 +37,7 @@ Napi::Value wrapResult(Napi::Env env, FontDescriptor *result) {
 // this destroys itself unless we call AsyncWorker::SuppressDestruct()
 template<typename _ReturnType>
 struct PromiseAsyncWorker : public Napi::AsyncWorker {
-  static_assert(std::is_same<_ReturnType, ResultSet>::value || std::is_same<_ReturnType, FontDescriptor>::value);
+  static_assert(std::is_same<_ReturnType, ResultSet>::value || std::is_same<_ReturnType, FontDescriptor>::value, "");
 
   PromiseAsyncWorker(Napi::Env env, std::function<long(_ReturnType **)> fn) :
     Napi::AsyncWorker(env),
@@ -51,7 +51,7 @@ struct PromiseAsyncWorker : public Napi::AsyncWorker {
     }
   };
 
-  virtual void OnOK() {
+  virtual void OnOK() override {
     if (std::is_same<_ReturnType, ResultSet>::value) {
       deferred.Resolve(collectResults(this->Env(), (ResultSet *)this->result));
     } else if(std::is_same<_ReturnType, FontDescriptor>::value) {

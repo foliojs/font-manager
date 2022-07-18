@@ -91,18 +91,19 @@ long createFontDescriptor(FontDescriptor **res, CTFontDescriptorRef descriptor) 
 
 struct DarwinInstanceData {
   CTFontCollectionRef collection = NULL;
-}
+};
 
 FontManagerImpl::FontManagerImpl() : instance_data(new DarwinInstanceData()) {}
 FontManagerImpl::~FontManagerImpl() {
-  delete instance_data;
+  delete static_cast<DarwinInstanceData *>(instance_data);
 }
 
 long FontManagerImpl::getAvailableFonts(ResultSet **resultSet) {
   // cache font collection for fast use in future calls
-  if (static_cast<DarwinInstanceData *>(this->instance_data)->collection == NULL)
-    collection = CTFontCollectionCreateFromAvailableFonts(NULL);
-  NSArray *matches = (NSArray *) CTFontCollectionCreateMatchingFontDescriptors(collection);
+  DarwinInstanceData *instance_data = static_cast<DarwinInstanceData *>(this->instance_data);
+  if (instance_data->collection == NULL)
+    instance_data->collection = CTFontCollectionCreateFromAvailableFonts(NULL);
+  NSArray *matches = (NSArray *) CTFontCollectionCreateMatchingFontDescriptors(instance_data->collection);
 
   *resultSet = new ResultSet;
   for (id m in matches) {
