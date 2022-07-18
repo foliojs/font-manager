@@ -1,6 +1,9 @@
 #include <Foundation/Foundation.h>
 #include <CoreText/CoreText.h>
+
+#include "FontManagerImpl.h"
 #include "FontDescriptor.h"
+#include "ResultSet.h"
 
 // converts a CoreText weight (-1 to +1) to a standard weight (100 to 900)
 static int convertWeight(float weight) {
@@ -86,9 +89,19 @@ long createFontDescriptor(FontDescriptor **res, CTFontDescriptorRef descriptor) 
   return *res == NULL ? -1 : 0;
 }
 
-long getAvailableFonts(ResultSet **resultSet) {
-  // TODO: this can be cached for performance, but requires making an interface to support per-instance data. probably making a class for each OS.
-  CTFontCollectionRef collection = CTFontCollectionCreateFromAvailableFonts(NULL);
+struct DarwinInstanceData {
+  CTFontCollectionRef collection = NULL;
+}
+
+FontManagerImpl::FontManagerImpl() : instance_data(new DarwinInstanceData()) {}
+FontManagerImpl::~FontManagerImpl() {
+  delete instance_data;
+}
+
+long FontManagerImpl::getAvailableFonts(ResultSet **resultSet) {
+  // cache font collection for fast use in future calls
+  if (static_cast<DarwinInstanceData *>(this->instance_data)->collection == NULL)
+    collection = CTFontCollectionCreateFromAvailableFonts(NULL);
   NSArray *matches = (NSArray *) CTFontCollectionCreateMatchingFontDescriptors(collection);
 
   *resultSet = new ResultSet;
@@ -174,7 +187,7 @@ int metricForMatch(CTFontDescriptorRef match, FontDescriptor *desc) {
   return metric;
 }
 
-long findFonts(ResultSet** fonts, FontDescriptor *desc) {
+long FontManagerImpl::findFonts(ResultSet** fonts, FontDescriptor *desc) {
   CTFontDescriptorRef descriptor = getFontDescriptor(desc);
   NSArray *matches = (NSArray *) CTFontDescriptorCreateMatchingFontDescriptors(descriptor, NULL);
 
@@ -224,7 +237,7 @@ CTFontDescriptorRef findBest(FontDescriptor *desc, NSArray *matches) {
   return best;
 }
 
-long findFont(FontDescriptor **foundFont, FontDescriptor *desc) {
+long FontManagerImpl::findFont(FontDescriptor **foundFont, FontDescriptor *desc) {
   CTFontDescriptorRef descriptor = getFontDescriptor(desc);
   NSArray *matches = (NSArray *) CTFontDescriptorCreateMatchingFontDescriptors(descriptor, NULL);
 
@@ -249,7 +262,7 @@ long findFont(FontDescriptor **foundFont, FontDescriptor *desc) {
   return error;
 }
 
-long substituteFont(FontDescriptor **res, char *postscriptName, char *string) {
+long FontManagerImpl::substituteFont(FontDescriptor **res, char *postscriptName, char *string) {
   // create a font descriptor to find the font by its postscript name
   // we don't use CTFontCreateWithName because that supports font
   // names other than the postscript name but prints warnings.

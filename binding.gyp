@@ -2,7 +2,10 @@
   "targets": [
     {
       "target_name": "fontmanager",
-      "sources": [ "src/FontManager.cc" ],
+      "sources": [
+        "src/FontDescriptor.cc",
+        "src/FontManager.cc"
+      ],
       "include_dirs": [
         "<!(node -p \"require('node-addon-api').include_dir\")"
       ],

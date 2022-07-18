@@ -1,17 +1,12 @@
 #include <cstdlib>
 
 #include "napi.h"
+
 #include "FontDescriptor.h"
+#include "ResultSet.h"
+#include "FontManagerImpl.h"
 
 using namespace Napi;
-
-using namespace std::placeholders;
-
-// these functions are implemented by the platform
-long getAvailableFonts(ResultSet **);
-long findFonts(ResultSet **, FontDescriptor *);
-long findFont(FontDescriptor **, FontDescriptor *);
-long substituteFont(FontDescriptor **, char *, char *);
 
 // converts a ResultSet to a JavaScript array
 Napi::Array collectResults(Napi::Env env, ResultSet *results) {
@@ -110,19 +105,21 @@ struct FontManagerInterface {
 // -----------------------------------------------------------------------------
 // Get Available Fonts
 // -----------------------------------------------------------------------------
-
 template<bool async>
 Napi::Value FontManagerInterface::getAvailableFonts(const Napi::CallbackInfo& info) {
   Napi::Env const &env = info.Env();
+  FontManagerImpl *impl = env.GetInstanceData<FontManagerImpl>();
 
   if (async) {
-    auto worker = new PromiseAsyncWorker<ResultSet>(env, ::getAvailableFonts);
+    auto worker = new PromiseAsyncWorker<ResultSet>(env, [=](ResultSet **results){
+      return impl->getAvailableFonts(results);
+    });
     worker->Queue();
 
     return worker->GetPromise();
   } else {
     ResultSet *results = NULL;
-    long error = ::getAvailableFonts(&results);
+    long error = impl->getAvailableFonts(&results);
     if (error != 0) {
       Napi::Error::New(env).ThrowAsJavaScriptException();
       return env.Null();
@@ -136,10 +133,10 @@ Napi::Value FontManagerInterface::getAvailableFonts(const Napi::CallbackInfo& in
 // -----------------------------------------------------------------------------
 // Find Fonts
 // -----------------------------------------------------------------------------
-
 template<bool async>
 Napi::Value FontManagerInterface::findFonts(const Napi::CallbackInfo& info) {
   Napi::Env const &env = info.Env();
+  FontManagerImpl *impl = env.GetInstanceData<FontManagerImpl>();
 
   if (info.Length() < 1 || !info[0].IsObject()) {
     return throwError<async>(env, Napi::TypeError::New(env, "Expected a font descriptor"));
@@ -149,7 +146,7 @@ Napi::Value FontManagerInterface::findFonts(const Napi::CallbackInfo& info) {
 
   if (async) {
     auto worker = new PromiseAsyncWorker<ResultSet>(env, [=](ResultSet **results) {
-      long error = ::findFonts(results, descriptor);
+      long error = impl->findFonts(results, descriptor);
       // need to clean up descriptor somewhere
       delete descriptor;
       return error;
@@ -159,7 +156,7 @@ Napi::Value FontManagerInterface::findFonts(const Napi::CallbackInfo& info) {
     return worker->GetPromise();
   } else {
     ResultSet *results = NULL;
-    long error = ::findFonts(&results, descriptor);
+    long error = impl->findFonts(&results, descriptor);
     if (error != 0) {
       Napi::Error::New(env).ThrowAsJavaScriptException();
       return env.Null();
@@ -174,12 +171,10 @@ Napi::Value FontManagerInterface::findFonts(const Napi::CallbackInfo& info) {
 // -----------------------------------------------------------------------------
 // Find Font
 // -----------------------------------------------------------------------------
-
-
-
 template<bool async>
 Napi::Value FontManagerInterface::findFont(const Napi::CallbackInfo& info) {
   Napi::Env const &env = info.Env();
+  FontManagerImpl *impl = env.GetInstanceData<FontManagerImpl>();
 
   if (info.Length() < 1 || !info[0].IsObject()) {
     return throwError<async>(env, Napi::TypeError::New(env, "Expected a font descriptor"));
@@ -189,7 +184,7 @@ Napi::Value FontManagerInterface::findFont(const Napi::CallbackInfo& info) {
 
   if (async) {
     auto worker = new PromiseAsyncWorker<FontDescriptor>(env, [=](FontDescriptor **result) {
-      long error = ::findFont(result, descriptor);
+      long error = impl->findFont(result, descriptor);
       // need to clean up descriptor somewhere
       delete descriptor;
       return error;
@@ -199,7 +194,7 @@ Napi::Value FontManagerInterface::findFont(const Napi::CallbackInfo& info) {
     return worker->GetPromise();
   } else {
     FontDescriptor *result = NULL;
-    long error = ::findFont(&result, descriptor);
+    long error = impl->findFont(&result, descriptor);
     if (error != 0) {
       Napi::Error::New(env).ThrowAsJavaScriptException();
       return env.Null();
@@ -214,10 +209,10 @@ Napi::Value FontManagerInterface::findFont(const Napi::CallbackInfo& info) {
 // -----------------------------------------------------------------------------
 // Substitute Fonts
 // -----------------------------------------------------------------------------
-
 template<bool async>
 Napi::Value FontManagerInterface::substituteFont(const Napi::CallbackInfo& info) {
   Napi::Env const &env = info.Env();
+  FontManagerImpl *impl = env.GetInstanceData<FontManagerImpl>();
 
   if (info.Length() < 1 || !info[0].IsString()) {
     return throwError<async>(env, Napi::TypeError::New(env, "Expected postscript name"));
@@ -231,14 +226,14 @@ Napi::Value FontManagerInterface::substituteFont(const Napi::CallbackInfo& info)
 
   if (async) {
     auto worker = new PromiseAsyncWorker<FontDescriptor>(env, [=](FontDescriptor **result) {
-      return ::substituteFont(result, (char *)postscriptName.c_str(), (char *)substitutionString.c_str());
+      return impl->substituteFont(result, (char *)postscriptName.c_str(), (char *)substitutionString.c_str());
     });
     worker->Queue();
 
     return worker->GetPromise();
   } else {
     FontDescriptor *result = NULL;
-    long error = ::substituteFont(&result,
+    long error = impl->substituteFont(&result,
       (char *)postscriptName.c_str(), (char *)substitutionString.c_str());
     if (error != 0) {
       Napi::Error::New(env).ThrowAsJavaScriptException();
@@ -250,6 +245,8 @@ Napi::Value FontManagerInterface::substituteFont(const Napi::CallbackInfo& info)
 }
 
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
+  env.SetInstanceData<FontManagerImpl>(new FontManagerImpl());
+
   exports.Set("getAvailableFonts",
     Napi::Function::New(env, FontManagerInterface::getAvailableFonts<true>));
   exports.Set("getAvailableFontsSync",

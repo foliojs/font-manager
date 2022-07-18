@@ -1,8 +1,11 @@
 #define WINVER 0x0600
-#include "FontDescriptor.h"
 #include <dwrite.h>
 #include <dwrite_1.h>
 #include <unordered_set>
+
+#include "FontManagerImpl.h"
+#include "FontDescriptor.h"
+#include "ResultSet.h"
 
 // throws a JS error when there is some exception in DirectWrite
 #define HR(hr) \
@@ -161,7 +164,10 @@ long resultFromFont(FontDescriptor **res, IDWriteFont *font) {
   return 0;
 }
 
-long getAvailableFonts(ResultSet **resultSet) {
+FontManagerImpl::FontManagerImpl() : instance_data(nullptr) {}
+FontManagerImpl::~FontManagerImpl() {}
+
+long FontManagerImpl::getAvailableFonts(ResultSet **resultSet) {
   int count = 0;
 
   IDWriteFactory *factory = NULL;
@@ -241,7 +247,7 @@ bool resultMatches(FontDescriptor *result, FontDescriptor *desc) {
   return true;
 }
 
-long findFonts(ResultSet** fonts, FontDescriptor *desc) {
+long FontManagerImpl::findFonts(ResultSet** fonts, FontDescriptor *desc) {
   RETURN_ERROR_CODE(getAvailableFonts(fonts));
 
   for (ResultSet::iterator it = (*fonts)->begin(); it != (*fonts)->end();) {
@@ -256,7 +262,7 @@ long findFonts(ResultSet** fonts, FontDescriptor *desc) {
   return 0;
 }
 
-long findFont(FontDescriptor **foundFont, FontDescriptor *desc) {
+long FontManagerImpl::findFont(FontDescriptor **foundFont, FontDescriptor *desc) {
   ResultSet *fonts;
   *foundFont = NULL;
   RETURN_ERROR_CODE(findFonts(&fonts, desc));
@@ -409,7 +415,7 @@ public:
   }
 };
 
-long substituteFont(FontDescriptor **res, char *postscriptName, char *string) {
+long FontManagerImpl::substituteFont(FontDescriptor **res, char *postscriptName, char *string) {
   IDWriteFactory *factory = NULL;
   // TODO: I don't know if the "internal state" being referred to here is in the factory object or in static memory. isolate until I figure it out
   RETURN_ERROR_CODE(DWriteCreateFactory(
