@@ -15,7 +15,7 @@ Napi::Array collectResults(Napi::Env env, ResultSet *results) {
 
   int i = 0;
   for (ResultSet::iterator it = results->begin(); it != results->end(); it++) {
-    (res).Set(i++, (*it)->toJSObject(env));
+    res.Set(i++, (*it)->toJSObject(env));
   }
 
   delete results;
@@ -247,25 +247,17 @@ Napi::Value FontManagerInterface::substituteFont(const Napi::CallbackInfo& info)
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
   env.SetInstanceData<FontManagerImpl>(new FontManagerImpl());
 
-  exports.Set("getAvailableFonts",
-    Napi::Function::New(env, FontManagerInterface::getAvailableFonts<true>));
-  exports.Set("getAvailableFontsSync",
-    Napi::Function::New(env, FontManagerInterface::getAvailableFonts<false>));
+  exports.Set("getAvailableFonts", Napi::Function::New(env, FontManagerInterface::getAvailableFonts<true>));
+  exports.Set("getAvailableFontsSync", Napi::Function::New(env, FontManagerInterface::getAvailableFonts<false>));
 
-  exports.Set("findFonts",
-    Napi::Function::New(env, FontManagerInterface::findFonts<true>));
-  exports.Set("findFontsSync",
-    Napi::Function::New(env, FontManagerInterface::findFonts<false>));
+  exports.Set("findFonts", Napi::Function::New(env, FontManagerInterface::findFonts<true>));
+  exports.Set("findFontsSync", Napi::Function::New(env, FontManagerInterface::findFonts<false>));
 
-  exports.Set("findFont",
-    Napi::Function::New(env, FontManagerInterface::findFont<true>));
-  exports.Set("findFontSync",
-    Napi::Function::New(env, FontManagerInterface::findFont<false>));
+  exports.Set("findFont", Napi::Function::New(env, FontManagerInterface::findFont<true>));
+  exports.Set("findFontSync", Napi::Function::New(env, FontManagerInterface::findFont<false>));
 
-  exports.Set("substituteFont",
-    Napi::Function::New(env, FontManagerInterface::substituteFont<true>));
-  exports.Set("substituteFontSync",
-    Napi::Function::New(env, FontManagerInterface::substituteFont<false>));
+  exports.Set("substituteFont", Napi::Function::New(env, FontManagerInterface::substituteFont<true>));
+  exports.Set("substituteFontSync", Napi::Function::New(env, FontManagerInterface::substituteFont<false>));
 
   return exports;
 }

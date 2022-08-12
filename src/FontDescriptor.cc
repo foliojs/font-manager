@@ -125,24 +125,24 @@ Napi::Object FontDescriptor::toJSObject(Napi::Env env) {
   Napi::EscapableHandleScope scope(env);
   Napi::Object res = Napi::Object::New(env);
   if (path) {
-    (res).Set(Napi::String::New(env, "path"), Napi::String::New(env, path));
+    res.Set(Napi::String::New(env, "path"), Napi::String::New(env, path));
   }
 
   if (postscriptName) {
-    (res).Set(Napi::String::New(env, "postscriptName"), Napi::String::New(env, postscriptName));
+    res.Set(Napi::String::New(env, "postscriptName"), Napi::String::New(env, postscriptName));
   }
 
   if (family) {
-    (res).Set(Napi::String::New(env, "family"), Napi::String::New(env, family));
+    res.Set(Napi::String::New(env, "family"), Napi::String::New(env, family));
   }
 
   if (style) {
-    (res).Set(Napi::String::New(env, "style"), Napi::String::New(env, style));
+    res.Set(Napi::String::New(env, "style"), Napi::String::New(env, style));
   }
 
-  (res).Set(Napi::String::New(env, "weight"), Napi::Number::New(env, weight));
-  (res).Set(Napi::String::New(env, "width"), Napi::Number::New(env, width));
-  (res).Set(Napi::String::New(env, "italic"), Napi::Boolean::New(env, italic));
-  (res).Set(Napi::String::New(env, "monospace"), Napi::Boolean::New(env, monospace));
+  res.Set(Napi::String::New(env, "weight"), Napi::Number::New(env, weight));
+  res.Set(Napi::String::New(env, "width"), Napi::Number::New(env, width));
+  res.Set(Napi::String::New(env, "italic"), Napi::Boolean::New(env, italic));
+  res.Set(Napi::String::New(env, "monospace"), Napi::Boolean::New(env, monospace));
   return scope.Escape(res).As<Napi::Object>();
 }
