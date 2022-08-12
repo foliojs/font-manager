@@ -480,7 +480,7 @@ long substituteFont(FontDescriptor **res, char *postscriptName, char *string) {
 
   // if we found something, create a result object
   if (renderer->font) {
-    RETURN_ERROR_CODE(resultFromFont(&font, renderer->font));
+    RETURN_ERROR_CODE(resultFromFont(res, renderer->font));
   }
 
   // free all the things
