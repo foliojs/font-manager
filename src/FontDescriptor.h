@@ -1,10 +1,6 @@
 #ifndef FONT_DESCRIPTOR_H
 #define FONT_DESCRIPTOR_H
 
-#include <cstdlib>
-#include <cstring>
-#include <vector>
-
 #include "napi.h"
 
 using namespace Napi;
@@ -47,6 +43,11 @@ public:
   bool monospace;
 
   FontDescriptor();
+  FontDescriptor (const FontDescriptor&) = delete;
+  FontDescriptor& operator= (const FontDescriptor&) = delete;
+  FontDescriptor (FontDescriptor&&) = delete;
+  FontDescriptor& operator= (FontDescriptor&&) = delete;
+
   FontDescriptor(FontDescriptor *desc);
   FontDescriptor(Napi::Env env, Napi::Object obj);
   FontDescriptor(

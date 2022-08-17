@@ -47,7 +47,7 @@ struct PromiseAsyncWorker : public Napi::AsyncWorker {
     this->result = nullptr;
     long error = this->fn(&this->result);
     if(error) {
-      PromiseAsyncWorker::SetError(std::string("Function failed with error code ") + std::to_string(error));
+      SetError(std::string("Function failed with error code ") + std::to_string(error));
     }
   };
 
@@ -217,11 +217,12 @@ Napi::Value FontManagerInterface::substituteFont(const Napi::CallbackInfo& info)
   if (info.Length() < 1 || !info[0].IsString()) {
     return throwError<async>(env, Napi::TypeError::New(env, "Expected postscript name"));
   }
-  std::string postscriptName = info[0].As<Napi::String>();
 
   if (info.Length() < 2 || !info[1].IsString()) {
     return throwError<async>(env, Napi::TypeError::New(env, "Expected substitution string"));
   }
+
+  std::string postscriptName = info[0].As<Napi::String>();
   std::string substitutionString = info[1].As<Napi::String>();
 
   if (async) {

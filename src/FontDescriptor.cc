@@ -1,11 +1,5 @@
 #include "FontDescriptor.h"
 
-#include <cstdlib>
-#include <cstring>
-#include <vector>
-
-#include "napi.h"
-
 using namespace Napi;
 
 char *copyString(const char *input) {

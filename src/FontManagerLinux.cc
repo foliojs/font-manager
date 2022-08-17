@@ -5,7 +5,7 @@
 #include "ResultSet.h"
 
 #if FC_MAJOR <= 2 && FC_MINOR <= 10 && FC_REVISION <= 91
-#error "This version of fontconfig isn't threadsafe.a"
+#error "This version of fontconfig isn't threadsafe."
 #endif
 
 int convertWeight(FontWeight weight) {

@@ -5,6 +5,11 @@ struct FontManagerImpl {
   FontManagerImpl();
   ~FontManagerImpl();
 
+  FontManagerImpl (const FontManagerImpl&) = delete;
+  FontManagerImpl& operator= (const FontManagerImpl&) = delete;
+  FontManagerImpl (FontManagerImpl&&) = delete;
+  FontManagerImpl& operator= (FontManagerImpl&&) = delete;
+
   long getAvailableFonts(ResultSet **);
   long findFonts(ResultSet **, FontDescriptor *);
   long findFont(FontDescriptor **, FontDescriptor *);
