@@ -1,7 +1,5 @@
 #include "FontDescriptor.h"
 
-using namespace Napi;
-
 char *copyString(const char *input) {
   if (!input)
     return NULL;

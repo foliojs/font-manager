@@ -3,7 +3,7 @@
 
 struct FontManagerImpl {
   FontManagerImpl();
-  ~FontManagerImpl();
+  virtual ~FontManagerImpl();
 
   FontManagerImpl (const FontManagerImpl&) = delete;
   FontManagerImpl& operator= (const FontManagerImpl&) = delete;

@@ -6,8 +6,6 @@
 #include "ResultSet.h"
 #include "FontManagerImpl.h"
 
-using namespace Napi;
-
 // converts a ResultSet to a JavaScript array
 Napi::Array collectResults(Napi::Env env, ResultSet *results) {
   Napi::EscapableHandleScope scope(env);

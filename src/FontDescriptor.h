@@ -3,7 +3,6 @@
 
 #include "napi.h"
 
-using namespace Napi;
 
 enum FontWeight {
   FontWeightUndefined   = 0,
@@ -61,7 +60,7 @@ public:
     bool monospace
   );
 
-  ~FontDescriptor();
+  virtual ~FontDescriptor();
 
   Napi::Object toJSObject(Napi::Env env);
 };
