@@ -20,6 +20,11 @@ describe('font-manager', function() {
 
   describe('getAvailableFonts', function() {
     it('should getAvailableFonts asynchronously', function() {
+      // CI on windows takes forever to finish this test.
+      if (process.platform === 'win32') {
+        this.timeout(60 * 1000);
+      }
+
       return fontManager.getAvailableFonts()
         .then(function(fonts) {
           assert(Array.isArray(fonts));
@@ -31,6 +36,11 @@ describe('font-manager', function() {
 
   describe('getAvailableFontsSync', function() {
     it('should getAvailableFonts synchronously', function() {
+      // CI on windows takes forever to finish this test.
+      if (process.platform === 'win32') {
+        this.timeout(60 * 1000);
+      }
+
       var fonts = fontManager.getAvailableFontsSync();
       assert(Array.isArray(fonts));
       assert(fonts.length > 0);

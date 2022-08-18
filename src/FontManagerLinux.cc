@@ -1,5 +1,12 @@
 #include <fontconfig/fontconfig.h>
+
+#include "FontManagerImpl.h"
 #include "FontDescriptor.h"
+#include "ResultSet.h"
+
+#if FC_MAJOR <= 2 && FC_MINOR <= 10 && FC_REVISION <= 91
+#error "This version of fontconfig isn't threadsafe."
+#endif
 
 int convertWeight(FontWeight weight) {
   switch (weight) {
@@ -139,7 +146,10 @@ ResultSet *getResultSet(FcFontSet *fs) {
   return res;
 }
 
-long getAvailableFonts(ResultSet **fonts) {
+FontManagerImpl::FontManagerImpl() : instance_data(nullptr) {}
+FontManagerImpl::~FontManagerImpl() {}
+
+long FontManagerImpl::getAvailableFonts(ResultSet **fonts) {
   FcInit();
 
   FcPattern *pattern = FcPatternCreate();
@@ -150,7 +160,6 @@ long getAvailableFonts(ResultSet **fonts) {
   FcPatternDestroy(pattern);
   FcObjectSetDestroy(os);
   FcFontSetDestroy(fs);
-
   return 0;
 }
 
@@ -183,7 +192,7 @@ FcPattern *createPattern(FontDescriptor *desc) {
   return pattern;
 }
 
-long findFonts(ResultSet **fonts, FontDescriptor *desc) {
+long FontManagerImpl::findFonts(ResultSet **fonts, FontDescriptor *desc) {
   FcPattern *pattern = createPattern(desc);
   FcObjectSet *os = FcObjectSetBuild(FC_FILE, FC_POSTSCRIPT_NAME, FC_FAMILY, FC_STYLE, FC_WEIGHT, FC_WIDTH, FC_SLANT, FC_SPACING, NULL);
   FcFontSet *fs = FcFontList(NULL, pattern, os);
@@ -196,7 +205,7 @@ long findFonts(ResultSet **fonts, FontDescriptor *desc) {
   return 0;
 }
 
-long findFont(FontDescriptor **foundFont, FontDescriptor *desc) {
+long FontManagerImpl::findFont(FontDescriptor **foundFont, FontDescriptor *desc) {
   FcPattern *pattern = createPattern(desc);
   FcConfigSubstitute(NULL, pattern, FcMatchPattern);
   FcDefaultSubstitute(pattern);
@@ -211,7 +220,7 @@ long findFont(FontDescriptor **foundFont, FontDescriptor *desc) {
   return 0;
 }
 
-long substituteFont(FontDescriptor **outFont, char *postscriptName, char *string) {
+long FontManagerImpl::substituteFont(FontDescriptor **outFont, char *postscriptName, char *string) {
   FcInit();
 
   // create a pattern with the postscript name

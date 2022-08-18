@@ -4,7 +4,7 @@
   "description": "Provides access to the system font catalog",
   "main": "index.js",
   "dependencies": {
-    "nan": "^2.14.0"
+    "node-addon-api": "^5.0.0"
   },
   "devDependencies": {
     "mocha": "*"

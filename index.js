@@ -11,63 +11,11 @@ try {
 
 module.exports = {
   findFontSync: (fontDescriptor) => fontManager.findFontSync(fontDescriptor),
-  findFont: (fontDescriptor) => new Promise(
-    (resolve, reject) => {
-      try {
-        fontManager.findFont(
-          fontDescriptor,
-          (error, font) => error !== null
-            ? reject(error)
-            : resolve(font)
-        );
-      } catch (error) {
-        reject(error);
-      }
-    }
-  ),
+  findFont: (fontDescriptor) => fontManager.findFont(fontDescriptor),
   findFontsSync: (fontDescriptor) => fontManager.findFontsSync(fontDescriptor),
-  findFonts: (fontDescriptor) => new Promise(
-    (resolve, reject) => {
-      try {
-        fontManager.findFonts(
-          fontDescriptor,
-          (error, fonts) => error !== null
-          ? reject(error)
-          : resolve(fonts)
-        );
-      } catch (error) {
-        reject(error);
-      }
-    }
-  ),
+  findFonts: (fontDescriptor) => fontManager.findFonts(fontDescriptor),
   getAvailableFontsSync: () => fontManager.getAvailableFontsSync(),
-  getAvailableFonts: () => new Promise(
-    (resolve, reject) => {
-      try {
-        fontManager.getAvailableFonts(
-          (error, fonts) => error !== null
-            ? reject(error)
-            : resolve(fonts)
-        );
-      } catch (error) {
-        reject(error);
-      }
-    }
-  ),
+  getAvailableFonts: () => fontManager.getAvailableFonts(),
   substituteFontSync: (postscriptName, text) => fontManager.substituteFontSync(postscriptName, text),
-  substituteFont: (postscriptName, text) => new Promise(
-    (resolve, reject) => {
-      try {
-        fontManager.substituteFont(
-          postscriptName,
-          text,
-          (error, font) => error !== null
-            ? reject(error)
-            : resolve(font)
-        );
-      } catch (error) {
-        reject(error);
-      }
-    }
-  )
+  substituteFont: (postscriptName, text) => fontManager.substituteFont(postscriptName, text)
 };

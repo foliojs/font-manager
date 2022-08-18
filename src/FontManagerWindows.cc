@@ -1,15 +1,15 @@
 #define WINVER 0x0600
-#include "FontDescriptor.h"
 #include <dwrite.h>
 #include <dwrite_1.h>
 #include <unordered_set>
 
-// throws a JS error when there is some exception in DirectWrite
-#define HR(hr) \
-  if (FAILED(hr)) throw "Font loading error";
+#include "FontManagerImpl.h"
+#include "FontDescriptor.h"
+#include "ResultSet.h"
+
 #define RETURN_ERROR_CODE(hr) \
-  { long error = hr; if (FAILED(error)) return error; }
-#define CONTINUE_ON_HRESULT_ERROR(hr) \
+  { long error = (hr); if (FAILED(error)) return error; }
+#define CONTINUE_ON_ERROR_CODE(hr) \
   if (FAILED(hr)) continue;
 
 WCHAR *utf8ToUtf16(const char *input) {
@@ -27,8 +27,7 @@ char *utf16ToUtf8(const WCHAR *input) {
 }
 
 // returns the index of the user's locale in the set of localized strings
-unsigned int getLocaleIndex(IDWriteLocalizedStrings *strings) {
-  unsigned int index = 0;
+long getLocaleIndex(unsigned int *index, IDWriteLocalizedStrings *strings) {
   BOOL exists = false;
   wchar_t localeName[LOCALE_NAME_MAX_LENGTH];
 
@@ -37,55 +36,55 @@ unsigned int getLocaleIndex(IDWriteLocalizedStrings *strings) {
 
   // If the default locale is returned, find that locale name, otherwise use "en-us".
   if (success) {
-    HR(strings->FindLocaleName(localeName, &index, &exists));
+    RETURN_ERROR_CODE(strings->FindLocaleName(localeName, index, &exists));
   }
 
   // if the above find did not find a match, retry with US English
   if (!exists) {
-    HR(strings->FindLocaleName(L"en-us", &index, &exists));
+    RETURN_ERROR_CODE(strings->FindLocaleName(L"en-us", index, &exists));
   }
 
   if (!exists)
-    index = 0;
+    *index = 0;
 
-  return index;
+  return 0;
 }
 
 // gets a localized string for a font
-char *getString(IDWriteFont *font, DWRITE_INFORMATIONAL_STRING_ID string_id) {
-  char *res = NULL;
+long getString(char **out, IDWriteFont *font, DWRITE_INFORMATIONAL_STRING_ID string_id) {
   IDWriteLocalizedStrings *strings = NULL;
 
   BOOL exists = false;
-  HR(font->GetInformationalStrings(
+  RETURN_ERROR_CODE(font->GetInformationalStrings(
     string_id,
     &strings,
     &exists
   ));
 
   if (exists) {
-    unsigned int index = getLocaleIndex(strings);
+    unsigned int index;
+    RETURN_ERROR_CODE(getLocaleIndex(&index, strings));
     unsigned int len = 0;
     WCHAR *str = NULL;
 
-    HR(strings->GetStringLength(index, &len));
+    RETURN_ERROR_CODE(strings->GetStringLength(index, &len));
     str = new WCHAR[len + 1];
 
-    HR(strings->GetString(index, str, len + 1));
+    RETURN_ERROR_CODE(strings->GetString(index, str, len + 1));
 
     // convert to utf8
-    res = utf16ToUtf8(str);
+    *out = utf16ToUtf8(str);
     delete str;
 
     strings->Release();
   }
 
-  if (!res) {
-    res = new char[1];
-    res[0] = '\0';
+  if (!*out) {
+    *out = new char[1];
+    *out[0] = '\0';
   }
 
-  return res;
+  return 0;
 }
 
 long resultFromFont(FontDescriptor **res, IDWriteFont *font) {
@@ -121,14 +120,15 @@ long resultFromFont(FontDescriptor **res, IDWriteFont *font) {
       RETURN_ERROR_CODE(fileLoader->GetFilePathFromKey(referenceKey, referenceKeySize, name, nameLength + 1));
 
       char *psName = utf16ToUtf8(name);
-      char *postscriptName = getString(font, DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_NAME);
-      char *family = getString(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES);
-      char *style = getString(font, DWRITE_INFORMATIONAL_STRING_WIN32_SUBFAMILY_NAMES);
+      char *postscriptName, *family, *style;
+      RETURN_ERROR_CODE(getString(&postscriptName, font, DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_NAME));
+      RETURN_ERROR_CODE(getString(&family, font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES));
+      RETURN_ERROR_CODE(getString(&style, font, DWRITE_INFORMATIONAL_STRING_WIN32_SUBFAMILY_NAMES));
 
       bool monospace = false;
       // this method requires windows 7, so we need to cast to an IDWriteFontFace1
       IDWriteFontFace1 *face1;
-      HRESULT hr = face->QueryInterface(__uuidof(IDWriteFontFace1), (void **)&face1);
+      hr = face->QueryInterface(__uuidof(IDWriteFontFace1), (void **)&face1);
       if (SUCCEEDED(hr)) {
         monospace = face1->IsMonospacedFont() == TRUE;
       };
@@ -161,13 +161,17 @@ long resultFromFont(FontDescriptor **res, IDWriteFont *font) {
   return 0;
 }
 
-long getAvailableFonts(ResultSet **resultSet) {
+FontManagerImpl::FontManagerImpl() : instance_data(nullptr) {}
+FontManagerImpl::~FontManagerImpl() {}
+
+long FontManagerImpl::getAvailableFonts(ResultSet **resultSet) {
   int count = 0;
 
   IDWriteFactory *factory = NULL;
 
+  // TODO: I don't know if the "internal state" being referred to here is in the factory object or in static memory. isolate until I figure it out
   RETURN_ERROR_CODE(DWriteCreateFactory(
-    DWRITE_FACTORY_TYPE_SHARED,
+    DWRITE_FACTORY_TYPE_ISOLATED,
     __uuidof(IDWriteFactory),
     reinterpret_cast<IUnknown**>(&factory)
   ));
@@ -189,15 +193,15 @@ long getAvailableFonts(ResultSet **resultSet) {
     IDWriteFontFamily *family = NULL;
 
     // Get the font family.
-    CONTINUE_ON_HRESULT_ERROR(collection->GetFontFamily(i, &family));
+    CONTINUE_ON_ERROR_CODE(collection->GetFontFamily(i, &family));
     int fontCount = family->GetFontCount();
 
     for (int j = 0; j < fontCount; j++) {
       IDWriteFont *desc = NULL;
       FontDescriptor *result = NULL;
 
-      CONTINUE_ON_HRESULT_ERROR(family->GetFont(j, &desc));
-      CONTINUE_ON_HRESULT_ERROR(resultFromFont(&result, desc));
+      CONTINUE_ON_ERROR_CODE(family->GetFont(j, &desc));
+      CONTINUE_ON_ERROR_CODE(resultFromFont(&result, desc));
       if (psNames.count(result->postscriptName) == 0) {
         (*resultSet)->push_back(result);
         psNames.insert(result->postscriptName);
@@ -240,7 +244,7 @@ bool resultMatches(FontDescriptor *result, FontDescriptor *desc) {
   return true;
 }
 
-long findFonts(ResultSet** fonts, FontDescriptor *desc) {
+long FontManagerImpl::findFonts(ResultSet** fonts, FontDescriptor *desc) {
   RETURN_ERROR_CODE(getAvailableFonts(fonts));
 
   for (ResultSet::iterator it = (*fonts)->begin(); it != (*fonts)->end();) {
@@ -255,7 +259,7 @@ long findFonts(ResultSet** fonts, FontDescriptor *desc) {
   return 0;
 }
 
-long findFont(FontDescriptor **foundFont, FontDescriptor *desc) {
+long FontManagerImpl::findFont(FontDescriptor **foundFont, FontDescriptor *desc) {
   ResultSet *fonts;
   *foundFont = NULL;
   RETURN_ERROR_CODE(findFonts(&fonts, desc));
@@ -408,10 +412,11 @@ public:
   }
 };
 
-long substituteFont(FontDescriptor **res, char *postscriptName, char *string) {
+long FontManagerImpl::substituteFont(FontDescriptor **res, char *postscriptName, char *string) {
   IDWriteFactory *factory = NULL;
+  // TODO: I don't know if the "internal state" being referred to here is in the factory object or in static memory. isolate until I figure it out
   RETURN_ERROR_CODE(DWriteCreateFactory(
-    DWRITE_FACTORY_TYPE_SHARED,
+    DWRITE_FACTORY_TYPE_ISOLATED, 
     __uuidof(IDWriteFactory),
     reinterpret_cast<IUnknown**>(&factory)
   ));
