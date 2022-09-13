@@ -52,6 +52,7 @@ long getLocaleIndex(unsigned int *index, IDWriteLocalizedStrings *strings) {
 
 // gets a localized string for a font
 long getString(char **out, IDWriteFont *font, DWRITE_INFORMATIONAL_STRING_ID string_id) {
+  *out = NULL;
   IDWriteLocalizedStrings *strings = NULL;
 
   BOOL exists = false;
