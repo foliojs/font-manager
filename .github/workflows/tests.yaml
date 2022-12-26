@@ -1,0 +1,81 @@
+on:
+  push:
+    branches:
+      - master
+      - release/*
+  pull_request:
+
+name: Run Tests
+
+jobs:
+  linux-tests:
+    name: "Linux Tests"
+    strategy:
+        matrix:
+          container: ["ubuntu:18.04"]
+          node: [12, 14, 16]
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ matrix.container }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Use Node.js ${{ matrix.node }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node }}
+          check-latest: true
+
+      - name: Install Ubuntu dependencies
+        if: ${{ startsWith(matrix.container, 'ubuntu') }}
+        run: |
+          apt-get update &&
+          apt-get install -y software-properties-common &&
+          apt-get install -y git build-essential python3.8 libfontconfig1-dev fonts-liberation ttf-wqy-microhei
+      - name: Run tests
+        run: |
+          npm install --global yarn
+          yarn
+          yarn test
+
+  macos-tests:
+    name: "MacOS Tests"
+    strategy:
+        matrix:
+          node: [12, 14, 16]
+    runs-on: macOS-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Use Node.js ${{ matrix.node }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node }}
+          check-latest: true
+
+      - run: |
+          npm install --global yarn
+          yarn
+          yarn test
+
+  windows-tests:
+    name: "Windows Tests"
+    strategy:
+        matrix:
+          node: [12, 14, 16]
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Use Node.js ${{ matrix.node }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node }}
+          check-latest: true
+
+      - run: |
+          npm install --global yarn
+          npm install --global node-gyp@9.0.0
+          npm prefix -g | % {npm config set node_gyp "$_\node_modules\node-gyp\bin\node-gyp.js"}
+          yarn
+          yarn test

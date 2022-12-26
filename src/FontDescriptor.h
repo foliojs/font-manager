@@ -1,13 +1,8 @@
 #ifndef FONT_DESCRIPTOR_H
 #define FONT_DESCRIPTOR_H
-#include <node.h>
-#include <v8.h>
-#include <nan.h>
-#include <stdlib.h>
-#include <string.h>
-#include <vector>
 
-using namespace v8;
+#include "napi.h"
+
 
 enum FontWeight {
   FontWeightUndefined   = 0,
@@ -48,185 +43,30 @@ public:
   bool italic;
   bool monospace;
 
-  FontDescriptor(Local<Object> obj) {
-    path = NULL;
-    postscriptName = getString(obj, "postscriptName");
-    family = getString(obj, "family");
-    localizedName = getString(obj, "localizedName");
-    enName = getString(obj, "enName");
-    style = getString(obj, "style");
-    weight = (FontWeight) getNumber(obj, "weight");
-    width = (FontWidth) getNumber(obj, "width");
-    italic = getBool(obj, "italic");
-    monospace = getBool(obj, "monospace");
-  }
+  FontDescriptor();
+  FontDescriptor (const FontDescriptor&) = delete;
+  FontDescriptor& operator= (const FontDescriptor&) = delete;
+  FontDescriptor (FontDescriptor&&) = delete;
+  FontDescriptor& operator= (FontDescriptor&&) = delete;
 
-  FontDescriptor() {
-    path = NULL;
-    postscriptName = NULL;
-    family = NULL;
-    localizedName = NULL;
-    enName = NULL;
-    style = NULL;
-    weight = FontWeightUndefined;
-    width = FontWidthUndefined;
-    italic = false;
-    monospace = false;
-  }
+  FontDescriptor(FontDescriptor *desc);
+  FontDescriptor(Napi::Env env, Napi::Object obj);
+  FontDescriptor(
+    const char *path,
+    const char *postscriptName,
+    const char *family,
+    const char *localizedName,
+    const char *enName,
+    const char *style,
+    FontWeight weight,
+    FontWidth width,
+    bool italic,
+    bool monospace
+  );
 
-  FontDescriptor(const char *path, const char *postscriptName, const char *family, const char *localizedName, const char *enName, const char *style,
-                 FontWeight weight, FontWidth width, bool italic, bool monospace) {
-    this->path = copyString(path);
-    this->postscriptName = copyString(postscriptName);
-    this->family = copyString(family);
-    this->localizedName = copyString(localizedName);
-    this->enName = copyString(enName);
-    this->style = copyString(style);
-    this->weight = weight;
-    this->width = width;
-    this->italic = italic;
-    this->monospace = monospace;
-  }
+  virtual ~FontDescriptor();
 
-  FontDescriptor(FontDescriptor *desc) {
-    path = copyString(desc->path);
-    postscriptName = copyString(desc->postscriptName);
-    family = copyString(desc->family);
-    localizedName = copyString(desc->localizedName);
-    enName = copyString(desc->enName);
-    style = copyString(desc->style);
-    weight = desc->weight;
-    width = desc->width;
-    italic = desc->italic;
-    monospace = desc->monospace;
-  }
-
-  ~FontDescriptor() {
-    if (path)
-      delete path;
-
-    if (postscriptName)
-      delete postscriptName;
-
-    if (family)
-      delete family;
-
-    if (localizedName)
-      delete localizedName;
-
-    if (enName)
-      delete enName;
-
-    if (style)
-      delete style;
-
-    postscriptName = NULL;
-    family = NULL;
-    localizedName = NULL;
-    enName = NULL;
-    style = NULL;
-  }
-
-  Local<Object> toJSObject() {
-    Nan::EscapableHandleScope scope;
-    Local<Object> res = Nan::New<Object>();
-    if (path) {
-      Nan::Set(res, Nan::New("path").ToLocalChecked(), Nan::New<String>(path).ToLocalChecked());
-    }
-
-    if (postscriptName) {
-      Nan::Set(res, Nan::New("postscriptName").ToLocalChecked(), Nan::New<String>(postscriptName).ToLocalChecked());
-    }
-
-    if (family) {
-      Nan::Set(res, Nan::New("family").ToLocalChecked(), Nan::New<String>(family).ToLocalChecked());
-    }
-
-    if (localizedName) {
-      Nan::Set(res, Nan::New("localizedName").ToLocalChecked(), Nan::New<String>(localizedName).ToLocalChecked());
-    }
-
-    if (enName) {
-      Nan::Set(res, Nan::New("enName").ToLocalChecked(), Nan::New<String>(enName).ToLocalChecked());
-    }
-
-    if (style) {
-      Nan::Set(res, Nan::New("style").ToLocalChecked(), Nan::New<String>(style).ToLocalChecked());
-    }
-
-    Nan::Set(res, Nan::New("weight").ToLocalChecked(), Nan::New<Number>(weight));
-    Nan::Set(res, Nan::New("width").ToLocalChecked(), Nan::New<Number>(width));
-    Nan::Set(res, Nan::New("italic").ToLocalChecked(), Nan::New<v8::Boolean>(italic));
-    Nan::Set(res, Nan::New("monospace").ToLocalChecked(), Nan::New<v8::Boolean>(monospace));
-    return scope.Escape(res);
-  }
-
-private:
-  char *copyString(const char *input) {
-    if (!input)
-      return NULL;
-
-    char *str = new char[strlen(input) + 1];
-    strcpy(str, input);
-    return str;
-  }
-
-  char *getString(Local<Object> obj, const char *name) {
-    Nan::HandleScope scope;
-    Nan::MaybeLocal<v8::Value> maybeValue = Nan::Get(obj, Nan::New(name).ToLocalChecked());
-
-    if (maybeValue.IsEmpty()) {
-      return NULL;
-    }
-
-    v8::Local<v8::Value> value = maybeValue.ToLocalChecked();
-    if (value->IsString()) {
-      return copyString(*Nan::Utf8String(Nan::To<v8::String>(value).ToLocalChecked()));
-    }
-
-    return NULL;
-  }
-
-  int getNumber(Local<Object> obj, const char *name) {
-    Nan::HandleScope scope;
-    Nan::MaybeLocal<v8::Value> maybeValue = Nan::Get(obj, Nan::New(name).ToLocalChecked());
-
-    if (maybeValue.IsEmpty()) {
-      return 0;
-    }
-
-    v8::Local<v8::Value> value = maybeValue.ToLocalChecked();
-    if (value->IsNumber()) {
-      return Nan::To<int>(value).FromJust();
-    }
-
-    return 0;
-  }
-
-  bool getBool(Local<Object> obj, const char *name) {
-    Nan::HandleScope scope;
-    Nan::MaybeLocal<v8::Value> maybeValue = Nan::Get(obj, Nan::New(name).ToLocalChecked());
-
-    if (maybeValue.IsEmpty()) {
-      return false;
-    }
-
-    v8::Local<v8::Value> value = maybeValue.ToLocalChecked();
-    if (value->IsBoolean()) {
-      return Nan::To<bool>(value).FromJust();
-    }
-
-    return false;
-  }
-};
-
-class ResultSet : public std::vector<FontDescriptor *> {
-public:
-  ~ResultSet() {
-    for (ResultSet::iterator it = this->begin(); it != this->end(); it++) {
-      delete *it;
-    }
-  }
+  Napi::Object toJSObject(Napi::Env env);
 };
 
 #endif

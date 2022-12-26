@@ -1,12 +1,13 @@
 {
-  "name": "font-manager",
-  "version": "0.3.1",
+  "name": "font-scanner",
+  "version": "0.3.2",
   "description": "Provides access to the system font catalog",
-  "main": "build/Release/fontmanager",
+  "main": "index.js",
   "types": "index.d.ts",
   "dependencies": {
     "electron-store": "^8.0.0",
-    "nan": ">=2.14.0"
+    "nan": ">=2.14.0",
+    "node-addon-api": "^5.0.0"
   },
   "devDependencies": {
     "mocha": "*"
@@ -15,11 +16,13 @@
     "test": "test"
   },
   "scripts": {
+    "rebuild-debug": "node-gyp rebuild --debug",
+    "rebuild-release": "node-gyp rebuild",
     "test": "mocha"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/devongovett/font-manager.git"
+    "url": "https://github.com/axosoft/font-scanner.git"
   },
   "keywords": [
     "font",
@@ -28,11 +31,15 @@
     "substitute",
     "enumerate"
   ],
-  "author": "Devon Govett <devongovett@gmail.com>",
+  "contributors": [
+    "Devon Govett <devongovett@gmail.com>",
+    "Tyler Ang-Wanek <tylera@axosoft.com>",
+    "Jordan Wallet <jordanw@axosoft.com>",
+    "Jake Krammer <jakek@axosoft.com>"
+  ],
   "license": "MIT",
-  "gypfile": true,
   "bugs": {
-    "url": "https://github.com/devongovett/font-manager/issues"
+    "url": "https://github.com/axosoft/font-scanner/issues"
   },
-  "homepage": "https://github.com/devongovett/font-manager"
+  "homepage": "https://github.com/axosoft/font-scanner"
 }

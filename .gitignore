@@ -1,3 +1,6 @@
 .DS_Store
+.idea
+.vs
+.vscode
 build/
 node_modules/

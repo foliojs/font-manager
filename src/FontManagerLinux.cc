@@ -1,5 +1,12 @@
 #include <fontconfig/fontconfig.h>
+
+#include "FontManagerImpl.h"
 #include "FontDescriptor.h"
+#include "ResultSet.h"
+
+#if FC_MAJOR <= 2 && FC_MINOR <= 10 && FC_REVISION <= 91
+#error "This version of fontconfig isn't threadsafe."
+#endif
 
 int convertWeight(FontWeight weight) {
   switch (weight) {
@@ -141,19 +148,21 @@ ResultSet *getResultSet(FcFontSet *fs) {
   return res;
 }
 
-ResultSet *getAvailableFonts() {
+FontManagerImpl::FontManagerImpl() : instance_data(nullptr) {}
+FontManagerImpl::~FontManagerImpl() {}
+
+long FontManagerImpl::getAvailableFonts(ResultSet **fonts) {
   FcInit();
 
   FcPattern *pattern = FcPatternCreate();
   FcObjectSet *os = FcObjectSetBuild(FC_FILE, FC_POSTSCRIPT_NAME, FC_FAMILY, FC_STYLE, FC_WEIGHT, FC_WIDTH, FC_SLANT, FC_SPACING, NULL);
   FcFontSet *fs = FcFontList(NULL, pattern, os);
-  ResultSet *res = getResultSet(fs);
-  
+  *fonts = getResultSet(fs);
+
   FcPatternDestroy(pattern);
   FcObjectSetDestroy(os);
   FcFontSetDestroy(fs);
-
-  return res;
+  return 0;
 }
 
 
@@ -185,35 +194,35 @@ FcPattern *createPattern(FontDescriptor *desc) {
   return pattern;
 }
 
-ResultSet *findFonts(FontDescriptor *desc) {
+long FontManagerImpl::findFonts(ResultSet **fonts, FontDescriptor *desc) {
   FcPattern *pattern = createPattern(desc);
   FcObjectSet *os = FcObjectSetBuild(FC_FILE, FC_POSTSCRIPT_NAME, FC_FAMILY, FC_STYLE, FC_WEIGHT, FC_WIDTH, FC_SLANT, FC_SPACING, NULL);
   FcFontSet *fs = FcFontList(NULL, pattern, os);
-  ResultSet *res = getResultSet(fs);
+  *fonts = getResultSet(fs);
 
   FcFontSetDestroy(fs);
   FcPatternDestroy(pattern);
   FcObjectSetDestroy(os);
 
-  return res;
+  return 0;
 }
 
-FontDescriptor *findFont(FontDescriptor *desc) {
+long FontManagerImpl::findFont(FontDescriptor **foundFont, FontDescriptor *desc) {
   FcPattern *pattern = createPattern(desc);
   FcConfigSubstitute(NULL, pattern, FcMatchPattern);
   FcDefaultSubstitute(pattern);
 
   FcResult result;
   FcPattern *font = FcFontMatch(NULL, pattern, &result);
-  FontDescriptor *res = createFontDescriptor(font);
+  *foundFont = createFontDescriptor(font);
 
   FcPatternDestroy(pattern);
   FcPatternDestroy(font);
 
-  return res;
+  return 0;
 }
 
-FontDescriptor *substituteFont(char *postscriptName, char *string) {
+long FontManagerImpl::substituteFont(FontDescriptor **outFont, char *postscriptName, char *string) {
   FcInit();
 
   // create a pattern with the postscript name
@@ -239,10 +248,10 @@ FontDescriptor *substituteFont(char *postscriptName, char *string) {
   // find the best match font
   FcResult result;
   FcPattern *font = FcFontMatch(NULL, pattern, &result);
-  FontDescriptor *res = createFontDescriptor(font);
+  *outFont = createFontDescriptor(font);
 
   FcPatternDestroy(pattern);
   FcPatternDestroy(font);
 
-  return res;
+  return 0;
 }
