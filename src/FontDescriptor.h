@@ -35,6 +35,8 @@ public:
   const char *path;
   const char *postscriptName;
   const char *family;
+  const char *localizedName;
+  const char *enName;
   const char *style;
   FontWeight weight;
   FontWidth width;
@@ -53,6 +55,8 @@ public:
     const char *path,
     const char *postscriptName,
     const char *family,
+    const char *localizedName,
+    const char *enName,
     const char *style,
     FontWeight weight,
     FontWidth width,

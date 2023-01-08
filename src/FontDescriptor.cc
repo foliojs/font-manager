@@ -57,6 +57,8 @@ FontDescriptor::FontDescriptor() {
   path = NULL;
   postscriptName = NULL;
   family = NULL;
+  localizedName = NULL;
+  enName = NULL;
   style = NULL;
   weight = FontWeightUndefined;
   width = FontWidthUndefined;
@@ -68,6 +70,8 @@ FontDescriptor::FontDescriptor(
   const char *path,
   const char *postscriptName,
   const char *family,
+  const char *localizedName,
+  const char *enName,
   const char *style,
   FontWeight weight,
   FontWidth width,
@@ -77,6 +81,8 @@ FontDescriptor::FontDescriptor(
   this->path = copyString(path);
   this->postscriptName = copyString(postscriptName);
   this->family = copyString(family);
+  this->localizedName = copyString(localizedName);
+  this->enName = copyString(enName);
   this->style = copyString(style);
   this->weight = weight;
   this->width = width;
@@ -88,6 +94,8 @@ FontDescriptor::FontDescriptor(FontDescriptor *desc) {
   path = copyString(desc->path);
   postscriptName = copyString(desc->postscriptName);
   family = copyString(desc->family);
+  localizedName = copyString(desc->localizedName);
+  enName = copyString(desc->enName);
   style = copyString(desc->style);
   weight = desc->weight;
   width = desc->width;
@@ -105,11 +113,19 @@ FontDescriptor::~FontDescriptor() {
   if (family)
     delete family;
 
+  if (localizedName)
+    delete localizedName;
+
+  if (enName)
+    delete enName;
+
   if (style)
     delete style;
 
   postscriptName = NULL;
   family = NULL;
+  localizedName = NULL;
+  enName = NULL;
   style = NULL;
 }
 
@@ -126,6 +142,14 @@ Napi::Object FontDescriptor::toJSObject(Napi::Env env) {
 
   if (family) {
     res.Set(Napi::String::New(env, "family"), Napi::String::New(env, family));
+  }
+
+  if (localizedName) {
+    res.Set(Napi::String::New(env, "localizedName"), Napi::String::New(env, localizedName));
+  }
+
+  if (enName) {
+    res.Set(Napi::String::New(env, "enName"), Napi::String::New(env, enName));
   }
 
   if (style) {

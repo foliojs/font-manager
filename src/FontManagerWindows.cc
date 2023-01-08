@@ -50,8 +50,25 @@ long getLocaleIndex(unsigned int *index, IDWriteLocalizedStrings *strings) {
   return 0;
 }
 
+unsigned int getLocaleIndexByName(unsigned int *index, IDWriteLocalizedStrings *strings, wchar_t* localeName) {
+  BOOL exists = false;
+
+  // If the default locale is returned, find that locale name, otherwise use "en-us".
+  RETURN_ERROR_CODE(strings->FindLocaleName(localeName, index, &exists));
+
+  // if the above find did not find a match, retry with US English
+  if (!exists) {
+    RETURN_ERROR_CODE(strings->FindLocaleName(L"en-us", index, &exists));
+  }
+
+  if (!exists)
+    *index = 0;
+
+  return 0;
+}
+
 // gets a localized string for a font
-long getString(char **out, IDWriteFont *font, DWRITE_INFORMATIONAL_STRING_ID string_id) {
+long getString(char **out, IDWriteFont *font, DWRITE_INFORMATIONAL_STRING_ID string_id, bool isLanguageSpecified = false, wchar_t* localeName = L"ja-jp") {
   *out = NULL;
   IDWriteLocalizedStrings *strings = NULL;
 
@@ -64,7 +81,11 @@ long getString(char **out, IDWriteFont *font, DWRITE_INFORMATIONAL_STRING_ID str
 
   if (exists) {
     unsigned int index;
-    RETURN_ERROR_CODE(getLocaleIndex(&index, strings));
+    if(isLanguageSpecified) {
+      RETURN_ERROR_CODE(getLocaleIndexByName(&index, strings, localeName));
+    } else {
+      RETURN_ERROR_CODE(getLocaleIndex(&index, strings));
+    }
     unsigned int len = 0;
     WCHAR *str = NULL;
 
@@ -121,9 +142,11 @@ long resultFromFont(FontDescriptor **res, IDWriteFont *font) {
       RETURN_ERROR_CODE(fileLoader->GetFilePathFromKey(referenceKey, referenceKeySize, name, nameLength + 1));
 
       char *psName = utf16ToUtf8(name);
-      char *postscriptName, *family, *style;
+      char *postscriptName, *family, *localizedName, *enName, *style;
       RETURN_ERROR_CODE(getString(&postscriptName, font, DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_NAME));
       RETURN_ERROR_CODE(getString(&family, font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES));
+      RETURN_ERROR_CODE(getString(&localizedName, font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES));
+      RETURN_ERROR_CODE(getString(&enName, font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES, true, L"en-us"));
       RETURN_ERROR_CODE(getString(&style, font, DWRITE_INFORMATIONAL_STRING_WIN32_SUBFAMILY_NAMES));
 
       bool monospace = false;
@@ -138,6 +161,8 @@ long resultFromFont(FontDescriptor **res, IDWriteFont *font) {
         psName,
         postscriptName,
         family,
+        localizedName,
+        enName,
         style,
         (FontWeight) font->GetWeight(),
         (FontWidth) font->GetStretch(),
@@ -149,6 +174,8 @@ long resultFromFont(FontDescriptor **res, IDWriteFont *font) {
       delete name;
       delete postscriptName;
       delete family;
+      delete localizedName;
+      delete enName;
       delete style;
       fileLoader->Release();
     }
@@ -270,7 +297,7 @@ long FontManagerImpl::findFont(FontDescriptor **foundFont, FontDescriptor *desc)
     delete fonts;
 
     FontDescriptor *fallback = new FontDescriptor(
-      NULL, NULL, NULL, NULL,
+      NULL, NULL, NULL, NULL, NULL, NULL,
       desc->weight, desc->width, desc->italic, false
     );
 
@@ -417,7 +444,7 @@ long FontManagerImpl::substituteFont(FontDescriptor **res, char *postscriptName,
   IDWriteFactory *factory = NULL;
   // TODO: I don't know if the "internal state" being referred to here is in the factory object or in static memory. isolate until I figure it out
   RETURN_ERROR_CODE(DWriteCreateFactory(
-    DWRITE_FACTORY_TYPE_ISOLATED, 
+    DWRITE_FACTORY_TYPE_ISOLATED,
     __uuidof(IDWriteFactory),
     reinterpret_cast<IUnknown**>(&factory)
   ));
